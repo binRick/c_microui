@@ -17,6 +17,7 @@ TIDIED_FILES = \
 			   *mui*/*.c *mui*/*.h \
 
 ##############################################################
+
 uncrustify:
 	@$(UNCRUSTIFY) -c etc/uncrustify.cfg --replace $(TIDIED_FILES)||true
 uncrustify-clean:
@@ -37,14 +38,16 @@ do-ninja-test:
 do-nodemon:
 	@$(PASSH) -L .nodemon.log $(NODEMON) \
 		--delay .1 \
-		-w "sdl/*.c" -w "sdl/*.h" -w "*-test/*.c" -w "*-test/*.h" \
+		-w "mui/*.c" -w "mui/*.h" \
+		-w "mui-*/*.c" -w "mui-*/*.h" \
+		-w "*-test/*.c" -w "*-test/*.h" \
 		-w 'meson/meson.build' \
 		-w 'meson/deps/*/meson.build' \
 		-w 'meson.build' \
 		-w Makefile \
 		-i 'build/*' \
 			-e Makefile,tpl,build,sh,c,h,Makefile \
-			-x env -- bash -c 'make'
+			-x env -- bash -c 'make nodemon'
 git-submodules-pull:
 	@git submodule foreach git pull origin master --jobs=10
 git-submodules-update:
@@ -63,8 +66,8 @@ tidy: \
 	git-add
 dev: do-nodemon
 all: do-build 
+nodemon: clean all
 meson-introspect-targets:
 	@meson introspect --targets -i meson.build
-
 meson-binaries:
 	@meson introspect --targets  meson.build -i | jq 'map(select(.type == "executable").filename)|flatten|join("\n")' -Mrc

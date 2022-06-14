@@ -1,13 +1,4 @@
-/*
-** Copyright (c) 2020 rxi
-**
-** This library is free software; you can redistribute it and/or modify it
-** under the terms of the MIT license. See `microui.c` for details.
-*/
-
-#ifndef MICROUI_H
-#define MICROUI_H
-
+#pragma once
 #define MU_VERSION                "2.01"
 
 #define MU_COMMANDLIST_SIZE       (256 * 1024)
@@ -293,4 +284,3 @@ void mu_end_popup(mu_Context *ctx);
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, int opt);
 void mu_end_panel(mu_Context *ctx);
 
-#endif

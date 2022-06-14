@@ -1,4 +1,3 @@
-#pragma once
 #include "mui-atlas.h"
 #include "mui-render.h"
 #include <assert.h>

@@ -1,11 +1,9 @@
-#pragma once
 #include "mui.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define unused(x)         ((void)(x))
-
 #define expect(x)         do {                                       \
     if (!(x)) {                                                      \
       fprintf(stderr, "Fatal error: %s:%d: assertion '%s' failed\n", \
@@ -13,13 +11,11 @@
       abort();                                                       \
     }                                                                \
 } while (0)
-
 #define push(stk, val)    do {                                             \
     expect((stk).idx < (int)(sizeof((stk).items) / sizeof(*(stk).items))); \
     (stk).items[(stk).idx] = (val);                                        \
     (stk).idx++; /* incremented after incase `val` uses this value */      \
 } while (0)
-
 #define pop(stk)          do { \
     expect((stk).idx > 0);     \
     (stk).idx--;               \
