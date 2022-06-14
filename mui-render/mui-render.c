@@ -1,19 +1,20 @@
+#pragma once
+#include "mui-atlas.h"
+#include "mui-render.h"
+#include <assert.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-#include <assert.h>
-#include "renderer.h"
-#include "atlas.inl"
 
-#define BUFFER_SIZE 16384
+#define BUFFER_SIZE    16384
 
-static GLfloat   tex_buf[BUFFER_SIZE *  8];
-static GLfloat  vert_buf[BUFFER_SIZE *  8];
-static GLubyte color_buf[BUFFER_SIZE * 16];
-static GLuint  index_buf[BUFFER_SIZE *  6];
+static GLfloat    tex_buf[BUFFER_SIZE * 8];
+static GLfloat    vert_buf[BUFFER_SIZE * 8];
+static GLubyte    color_buf[BUFFER_SIZE * 16];
+static GLuint     index_buf[BUFFER_SIZE * 6];
 
-static int width  = 800;
-static int height = 600;
-static int buf_idx;
+static int        width  = 800;
+static int        height = 600;
+static int        buf_idx;
 
 static SDL_Window *window;
 
@@ -41,7 +42,7 @@ void r_init(void) {
   glGenTextures(1, &id);
   glBindTexture(GL_TEXTURE_2D, id);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, ATLAS_WIDTH, ATLAS_HEIGHT, 0,
-    GL_ALPHA, GL_UNSIGNED_BYTE, atlas_texture);
+               GL_ALPHA, GL_UNSIGNED_BYTE, atlas_texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   assert(glGetError() == 0);
@@ -49,7 +50,9 @@ void r_init(void) {
 
 
 static void flush(void) {
-  if (buf_idx == 0) { return; }
+  if (buf_idx == 0) {
+    return;
+  }
 
   glViewport(0, 0, width, height);
   glMatrixMode(GL_PROJECTION);
@@ -75,19 +78,21 @@ static void flush(void) {
 
 
 static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
-  if (buf_idx == BUFFER_SIZE) { flush(); }
+  if (buf_idx == BUFFER_SIZE) {
+    flush();
+  }
 
-  int texvert_idx = buf_idx *  8;
-  int   color_idx = buf_idx * 16;
-  int element_idx = buf_idx *  4;
-  int   index_idx = buf_idx *  6;
+  int texvert_idx = buf_idx * 8;
+  int color_idx   = buf_idx * 16;
+  int element_idx = buf_idx * 4;
+  int index_idx   = buf_idx * 6;
   buf_idx++;
 
   /* update texture buffer */
-  float x = src.x / (float) ATLAS_WIDTH;
-  float y = src.y / (float) ATLAS_HEIGHT;
-  float w = src.w / (float) ATLAS_WIDTH;
-  float h = src.h / (float) ATLAS_HEIGHT;
+  float x = src.x / (float)ATLAS_WIDTH;
+  float y = src.y / (float)ATLAS_HEIGHT;
+  float w = src.w / (float)ATLAS_WIDTH;
+  float h = src.h / (float)ATLAS_HEIGHT;
   tex_buf[texvert_idx + 0] = x;
   tex_buf[texvert_idx + 1] = y;
   tex_buf[texvert_idx + 2] = x + w;
@@ -108,9 +113,9 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
   vert_buf[texvert_idx + 7] = dst.y + dst.h;
 
   /* update color buffer */
-  memcpy(color_buf + color_idx +  0, &color, 4);
-  memcpy(color_buf + color_idx +  4, &color, 4);
-  memcpy(color_buf + color_idx +  8, &color, 4);
+  memcpy(color_buf + color_idx + 0, &color, 4);
+  memcpy(color_buf + color_idx + 4, &color, 4);
+  memcpy(color_buf + color_idx + 8, &color, 4);
   memcpy(color_buf + color_idx + 12, &color, 4);
 
   /* update index buffer */
@@ -120,7 +125,7 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
   index_buf[index_idx + 3] = element_idx + 2;
   index_buf[index_idx + 4] = element_idx + 3;
   index_buf[index_idx + 5] = element_idx + 1;
-}
+} /* push_quad */
 
 
 void r_draw_rect(mu_Rect rect, mu_Color color) {
@@ -130,9 +135,12 @@ void r_draw_rect(mu_Rect rect, mu_Color color) {
 
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
   mu_Rect dst = { pos.x, pos.y, 0, 0 };
+
   for (const char *p = text; *p; p++) {
-    if ((*p & 0xc0) == 0x80) { continue; }
-    int chr = mu_min((unsigned char) *p, 127);
+    if ((*p & 0xc0) == 0x80) {
+      continue;
+    }
+    int     chr = mu_min((unsigned char)*p, 127);
     mu_Rect src = atlas[ATLAS_FONT + chr];
     dst.w = src.w;
     dst.h = src.h;
@@ -144,25 +152,29 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
 
 void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
   mu_Rect src = atlas[id];
-  int x = rect.x + (rect.w - src.w) / 2;
-  int y = rect.y + (rect.h - src.h) / 2;
+  int     x   = rect.x + (rect.w - src.w) / 2;
+  int     y   = rect.y + (rect.h - src.h) / 2;
+
   push_quad(mu_rect(x, y, src.w, src.h), src, color);
 }
 
 
 int r_get_text_width(const char *text, int len) {
   int res = 0;
+
   for (const char *p = text; *p && len--; p++) {
-    if ((*p & 0xc0) == 0x80) { continue; }
-    int chr = mu_min((unsigned char) *p, 127);
+    if ((*p & 0xc0) == 0x80) {
+      continue;
+    }
+    int chr = mu_min((unsigned char)*p, 127);
     res += atlas[ATLAS_FONT + chr].w;
   }
-  return res;
+  return(res);
 }
 
 
 int r_get_text_height(void) {
-  return 18;
+  return(18);
 }
 
 

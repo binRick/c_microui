@@ -1,0 +1,23 @@
+mui_test_srcs = [
+  'mui-test.c',
+]
+mui_test_inc = [
+ inc,
+]
+mui_test_deps = [
+ sdl2_dep,
+ mui_dep,
+ mui_atlas_dep,
+ mui_render_dep,
+]
+
+if get_option('enable-binaries')
+  mui_test_exec = executable('mui-test',
+     mui_test_srcs,
+     dependencies: mui_test_deps,
+     include_directories: mui_test_inc,
+  )
+  if get_option('enable-binary-tests')
+    test('mui-test', mui_test_exec, args: [])
+  endif
+endif

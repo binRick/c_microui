@@ -1,0 +1,12 @@
+option('ttyrescue-path', type : 'string', value : '/usr/libexec')
+option('enable-binaries',
+  type : 'boolean',
+  value : true,
+  description : 'Enables binaries.'
+)
+option('enable-binary-tests',
+  type : 'boolean',
+  value : true,
+  description : 'Enables binary tests.'
+)
+
