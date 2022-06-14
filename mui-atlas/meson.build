@@ -3,14 +3,8 @@ mui_atlas_srcs = [
 ]
 mui_atlas_inc = [
  inc,
- '.',
- '../',
- '../mui',
- '../mui-atlas',
- '../mui-render',
 ]
 mui_atlas_deps = [
-  sdl2_dep,
 ]
 
 mui_atlas_lib = library('mui-atlas',

@@ -36,14 +36,15 @@ do-ninja-test:
 	@eval cd . && { passh ninja test -C build -v; echo NINJA TEST OK; }
 do-nodemon:
 	@$(PASSH) -L .nodemon.log $(NODEMON) \
-	-V \
-		--delay .3 \
+		--delay .1 \
 		-w "sdl/*.c" -w "sdl/*.h" -w "*-test/*.c" -w "*-test/*.h" \
-		-w 'meson/meson.build' -w 'meson/deps/*/meson.build' -w 'meson.build' \
+		-w 'meson/meson.build' \
+		-w 'meson/deps/*/meson.build' \
+		-w 'meson.build' \
 		-w Makefile \
-		-i '*/embeds/*' -i 'subprojects/*/' -i submodules -i 'build/*' \
+		-i 'build/*' \
 			-e Makefile,tpl,build,sh,c,h,Makefile \
-			-x env -- bash -xc 'make'
+			-x env -- bash -c 'make'
 git-submodules-pull:
 	@git submodule foreach git pull origin master --jobs=10
 git-submodules-update:

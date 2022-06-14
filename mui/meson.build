@@ -3,12 +3,8 @@ mui_srcs = [
 ]
 mui_inc = [
  inc,
- '.',
- '../mui',
- '../mui-render',
 ]
 mui_deps = [
-  sdl2_dep,
 ]
 
 mui_lib = library('mui',
