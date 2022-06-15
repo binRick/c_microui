@@ -30,14 +30,15 @@ fix-dbg:
 	@$(SED) 's|, % d);|, %d);|g' -i $(TIDIED_FILES)
 	@$(SED) 's|, % zu);|, %zu);|g' -i $(TIDIED_FILES)
 do-meson:
-	@eval cd . && {  meson build || { meson build --reconfigure || { meson build --wipe; } && meson build; }; echo MESON OK; }
+	@meson build || { meson build --reconfigure || { meson build --wipe; } && meson build; }
 do-ninja:
-	@eval cd . && { ninja -C build; echo NINJA OK; }
+	@ninja -C build
 do-ninja-test:
-	@eval cd . && { passh ninja test -C build -v; echo NINJA TEST OK; }
+	@ninja test -C build -v
 do-nodemon:
 	@$(PASSH) -L .nodemon.log $(NODEMON) \
 		--delay .1 \
+		-w "meson_options.txt" \
 		-w "mui/*.c" -w "mui/*.h" \
 		-w "mui-*/*.c" -w "mui-*/*.h" \
 		-w "*-test/*.c" -w "*-test/*.h" \
@@ -46,7 +47,7 @@ do-nodemon:
 		-w 'meson.build' \
 		-w Makefile \
 		-i 'build/*' \
-			-e Makefile,tpl,build,sh,c,h,Makefile \
+			-e Makefile,build,sh,c,h,txt \
 			-x env -- bash -c 'make nodemon'
 git-submodules-pull:
 	@git submodule foreach git pull origin master --jobs=10

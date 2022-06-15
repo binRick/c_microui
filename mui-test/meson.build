@@ -21,7 +21,7 @@ if get_option('enable-binaries')
     test('mui-test', timeout_bin,
       args: [
         '--preserve-status',
-        mui_test_timeout_seconds,
+        get_option('timeout').to_string(),
         mui_test_exec,
       ]
     )

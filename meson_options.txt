@@ -1,4 +1,3 @@
-option('ttyrescue-path', type : 'string', value : '/usr/libexec')
 option('enable-binaries',
   type : 'boolean',
   value : true,
@@ -8,5 +7,12 @@ option('enable-binary-tests',
   type : 'boolean',
   value : true,
   description : 'Enables binary tests.'
+)
+option('timeout', 
+  type : 'integer', 
+  min : 1, 
+  max : 10, 
+  value : 1,
+  description : 'How Long the test app should execute',
 )
 
