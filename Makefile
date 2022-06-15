@@ -82,7 +82,7 @@ tidy: \
 	do-uncrustify \
 	do-build \
 	git-add
-dev: do-nodemon
+dev: clean do-nodemon
 do-setup: do-clear python-venv
 do-clear:
 	@clear
