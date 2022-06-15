@@ -1,4 +1,5 @@
 #pragma once
+#include <SDL2/SDL.h>
 #define MU_VERSION                "2.01"
 
 #define MU_COMMANDLIST_SIZE       (256 * 1024)
@@ -201,6 +202,7 @@ struct mu_Context {
   int          key_down;
   int          key_pressed;
   char         input_text[32];
+  SDL_Renderer *renderer;
 };
 
 

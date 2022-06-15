@@ -8,11 +8,17 @@ option('enable-binary-tests',
   value : true,
   description : 'Enables binary tests.'
 )
+option('timeout-test', 
+  type : 'boolean', 
+  value : true,
+  description : 'Timeout during test',
+)
+
 option('timeout', 
   type : 'integer', 
   min : 1, 
-  max : 10, 
-  value : 1,
+  max : 30, 
+  value : 15,
   description : 'How Long the test app should execute',
 )
 

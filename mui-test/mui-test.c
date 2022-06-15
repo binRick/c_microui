@@ -1,12 +1,12 @@
 #include "mui-render.h"
 #include "mui.h"
 #include <stdio.h>
+#include <string.h>
 #include <SDL2/SDL.h>
-
 
 static char  logbuf[64000];
 static int   logbuf_updated = 0;
-static float bg[3]          = { 90, 95, 100 };
+static float bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 
 
 static void write_log(const char *text) {
@@ -20,7 +20,7 @@ static void write_log(const char *text) {
 
 static void test_window(mu_Context *ctx) {
   /* do window */
-  if (mu_begin_window(ctx, "Demo Window", mu_rect(40, 40, 300, 450))) {
+  if (mu_begin_window(ctx, "Demo Window", mu_rect(10, 10, 300, 405))) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 300);
@@ -138,7 +138,7 @@ static void test_window(mu_Context *ctx) {
 
 
 static void log_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Log Window", mu_rect(350, 40, 300, 200))) {
+  if (mu_begin_window(ctx, "Log Window", mu_rect(10, 425, 612, 150))) {
     /* output text panel */
     mu_layout_row(ctx, 1, (int[]) { -1 }, -25);
     mu_begin_panel(ctx, "Log Output");
@@ -204,7 +204,7 @@ static void style_window(mu_Context *ctx) {
     { NULL }
   };
 
-  if (mu_begin_window(ctx, "Style Editor", mu_rect(350, 250, 300, 240))) {
+  if (mu_begin_window(ctx, "Style Editor", mu_rect(320, 10, 300, 405))) {
     int sw = mu_get_current_container(ctx)->body.w * 0.14;
     mu_layout_row(ctx, 6, (int[]) { 80, sw, sw, sw, sw, -1 }, 0);
     for (int i = 0; colors[i].label; i++) {
@@ -295,6 +295,10 @@ int main(int argc, char **argv) {
       }
 
       case SDL_KEYDOWN:
+        if (e.key.keysym.sym == SDLK_s) {
+          fprintf(stderr, "screenshot..\n");
+          //screenshot(renderer, "screenshot.bmp");
+        }
       case SDL_KEYUP: {
         int c = key_map[e.key.keysym.sym & 0xff];
         if (c && e.type == SDL_KEYDOWN) {

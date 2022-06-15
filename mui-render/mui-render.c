@@ -1,13 +1,19 @@
 #include "mui-atlas.h"
 #include "mui-render.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #define SDL_WINDOW_OPTIONS \
   SDL_WINDOW_OPENGL        \
   | SDL_WINDOW_ALLOW_HIGHDPI
+#define __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_ALWAYS_ON_TOP
 #define __SDL_WINDOW_BORDERLESS
+#ifdef WINDOW_HIDDEN
+#undef __SDL_WINDOW_HIDDEN
+#define __SDL_WINDOW_HIDDEN    | SDL_WINDOW_HIDDEN
+#endif
 #ifdef WINDOW_BORDERLESS
 #undef __SDL_WINDOW_BORDERLESS
 #define __SDL_WINDOW_BORDERLESS    | SDL_WINDOW_BORDERLESS
@@ -22,26 +28,51 @@
 #define BUFFER_SIZE    16384
 
 static GLfloat tex_buf[BUFFER_SIZE * 8];
-static GLfloat    vert_buf[BUFFER_SIZE * 8];
-static GLubyte    color_buf[BUFFER_SIZE * 16];
-static GLuint     index_buf[BUFFER_SIZE * 6];
+static GLfloat      vert_buf[BUFFER_SIZE * 8];
+static GLubyte      color_buf[BUFFER_SIZE * 16];
+static GLuint       index_buf[BUFFER_SIZE * 6];
 
-static int        width  = WINDOW_WIDTH;
-static int        height = WINDOW_HEIGHT;
-static int        buf_idx;
+static int          width  = WINDOW_WIDTH;
+static int          height = WINDOW_HEIGHT;
+static int          buf_idx;
 
-static SDL_Window *window;
+static SDL_Window   *window;
+static SDL_Renderer *renderer;
+
+
+static void screenshot(SDL_Renderer *renderer, const char *filename) {
+  int width  = 0;
+  int height = 0;
+
+  SDL_GetRendererOutputSize(renderer, &width, &height);
+
+  SDL_Surface *screenshot = SDL_CreateRGBSurface(
+    0, width, height, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+
+  SDL_RenderReadPixels(
+    renderer, NULL, SDL_PIXELFORMAT_ARGB8888, screenshot->pixels,
+    screenshot->pitch);
+  SDL_SaveBMP(screenshot, filename);
+  SDL_FreeSurface(screenshot);
+}
 
 
 void r_init(void) {
-  /* init SDL window */
   window = SDL_CreateWindow(
     WINDOW_TITLE,
     WINDOW_X_OFFSET, WINDOW_Y_OFFSET,
-    width, height, SDL_WINDOW_OPTIONS __SDL_WINDOW_ALWAYS_ON_TOP __SDL_WINDOW_BORDERLESS
+    width, height,
+    SDL_WINDOW_OPTIONS
+    __SDL_WINDOW_ALWAYS_ON_TOP \
+    __SDL_WINDOW_BORDERLESS    \
+    __SDL_WINDOW_HIDDEN        \
     );
+//  SDL_RaiseWindow(window);
+// SDL_HideWindow(window);
+//  SDL_ShowWindow(window);
+
   SDL_GL_CreateContext(window);
-  SDL_SetWindowIcon(window, SDL_LoadBMP("assets/window_icon.bmp"));
+  SDL_SetWindowIcon(window, SDL_LoadBMP("../window_icon.bmp"));
 
 
   /* init gl */
@@ -64,7 +95,16 @@ void r_init(void) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   assert(glGetError() == 0);
-}
+
+  if (false) {
+    renderer = SDL_CreateRenderer(
+      window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (renderer == NULL) {
+      SDL_Log("unable to create renderer: %s", SDL_GetError());
+      //exit(1);
+    }
+  }
+} /* r_init */
 
 
 static void flush(void) {

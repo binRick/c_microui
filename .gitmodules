@@ -1,0 +1,3 @@
+[submodule "submodules/meson_deps"]
+	path = submodules/meson_deps
+	url = ssh://git@github.com/binRick/meson_deps

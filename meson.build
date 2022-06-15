@@ -15,6 +15,8 @@ inc = [
 ]
 #//////////////////
 add_project_link_arguments(mui_global_linkflags, language : ['c'])
+configure_file(input: 'assets/window_icon.bmp',   output: 'window_icon.bmp',   copy: true)
+
 #//////////////////
 subdir('mui')
 subdir('mui-atlas')
