@@ -29,7 +29,12 @@ python-venv-meson:
 	@[[ -e $(NINJA) ]] || { $(SOURCE_VENV_CMD) && pip3 install ninja -U; }
 	@true
 do-loc: 
-	@$(LOC) --files
+	@$(LOC) \
+		--files \
+		--exclude 'submodules' \
+		--exclude 'subprojects' \
+		--exclude 'build' \
+		--exclude '.cache'
 loc: do-loc
 uncrustify:
 	@$(UNCRUSTIFY) -c etc/uncrustify.cfg --replace $(TIDIED_FILES)||true

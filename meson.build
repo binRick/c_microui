@@ -1,12 +1,16 @@
 project('c_mui',['c'],default_options:['warning_level=0','c_std=gnu99'], version : '0.0.1')
-cc = meson.get_compiler('c')
-meson_deps_dir = meson.current_source_dir()
+#############################################################
 timeout_bin = find_program('timeout', required : true)
 sdl2_dep = dependency('sdl2',fallback:['sdl2', 'sdl2'], required: true)
 #############################################################
-mui_global_linkflags = [
-  '-Wl,-framework,OpenGL',
-]
+cc = meson.get_compiler('c')
+meson_deps_dir = meson.current_source_dir()
+mui_global_linkflags = ['-Wl,-framework,OpenGL']
+add_project_link_arguments(mui_global_linkflags, language : ['c'])
+#############################################################
+
+
+#//////////////////
 inc = [
   include_directories('.'),
   include_directories('./mui'),
@@ -14,8 +18,19 @@ inc = [
   include_directories('./mui-atlas'),
 ]
 #//////////////////
-add_project_link_arguments(mui_global_linkflags, language : ['c'])
-configure_file(input: 'assets/window_icon.bmp',   output: 'window_icon.bmp',   copy: true)
+
+
+
+#//////////////////
+configure_file(
+  input: 'assets/window_icon.bmp',  
+  output: 'window_icon.bmp',   
+  copy: true,
+)
+#//////////////////
+
+
+
 
 #//////////////////
 subdir('mui')
