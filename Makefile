@@ -1,29 +1,43 @@
 default: all
 ##############################################################
-PASSH=$(shell command -v passh)
+PWD=$(shell command -v pwd)
+DIR=$(shell $(PWD))
+VENV_DIR=$(DIR)/.venv
 GIT=$(shell command -v git)
 SED=$(shell command -v gsed||command -v sed)
 NODEMON=$(shell command -v nodemon)
-FZF=$(shell command -v fzf)
-BLINE=$(shell command -v bline)
 UNCRUSTIFY=$(shell command -v uncrustify)
-PWD=$(shell command -v pwd)
-FIND=$(shell command -v find)
-EMBED_BINARY=$(shell command -v embed)
-JQ_BIN=$(shell command -v jq)
-DIR=$(shell pwd)	
+LOC=$(shell command -v loc)
+##############################################################
+MESON=$(VENV_DIR)/bin/meson
+NINJA=$(VENV_DIR)/bin/ninja
+##############################################################
+SOURCE_VENV_CMD=source $(VENV_DIR)/bin/activate
+NM_TARGET=nodemon	
 ##############################################################
 TIDIED_FILES = \
-			   *mui*/*.c *mui*/*.h \
-
+			   *mui*/*.c *mui*/*.h
 ##############################################################
-
+python-venv: do-python-venv python-venv-meson
+do-python-venv:
+	@[[ -f $(VENV_DIR)/bin/activate ]] ||  { python3 -m venv $(VENV_DIR) && $(SOURCE_VENV_CMD) && pip3 install pip -U; }
+	@true
+python-venv-meson:
+	@[[ -e $(MESON) ]] || { $(SOURCE_VENV_CMD) && pip3 install meson -U; }
+	@[[ -e $(NINJA) ]] || { $(SOURCE_VENV_CMD) && pip3 install ninja -U; }
+	@true
+do-loc: 
+	@$(LOC) --files
+loc: do-loc
 uncrustify:
 	@$(UNCRUSTIFY) -c etc/uncrustify.cfg --replace $(TIDIED_FILES)||true
 uncrustify-clean:
 	@find  . -type f -maxdepth 2 -name "*unc-back*"|xargs -I % unlink %
 clean:
 	@rm -rf build .cache
+clean-venv: 
+	@[[ -d $(VENV_DIR) && rm -rf $(VENV_DIR)
+	@true
 fix-dbg:
 	@$(SED) 's|, % s);|, %s);|g' -i $(TIDIED_FILES)
 	@$(SED) 's|, % lu);|, %lu);|g' -i $(TIDIED_FILES)
@@ -33,13 +47,13 @@ install: all do-meson-install
 do-meson-install:
 	@cd build && meson install
 do-meson:
-	@meson build || { meson build --reconfigure || { meson build --wipe; } && meson build; }
+	@$(MESON) build || { meson build --reconfigure || { meson build --wipe; } && meson build; }
 do-ninja:
-	@ninja -C build
+	@$(NINJA) -C build
 do-ninja-test:
-	@ninja test -C build -v
+	@$(NINJA) test -C build -v
 do-nodemon:
-	@$(PASSH) -L .nodemon.log $(NODEMON) \
+	@$(NODEMON) \
 		--delay .1 \
 		-w "meson_options.txt" \
 		-w "mui/*.c" -w "mui/*.h" \
@@ -51,13 +65,13 @@ do-nodemon:
 		-w Makefile \
 		-i 'build/*' \
 			-e Makefile,build,sh,c,h,txt \
-			-x env -- bash -c 'make nodemon'
+			-x env -- bash -c 'make nodemon||true'
 git-submodules-pull:
-	@git submodule foreach git pull origin master --jobs=10
+	@$(GIT) submodule foreach git pull origin master --jobs=10
 git-submodules-update:
-	@git submodule update --init
+	@$(GIT) submodule update --init
 git-pull:
-	@git pull --recurse-submodules
+	@$(GIT) pull --recurse-submodules
 do-uncrustify: uncrustify uncrustify-clean fix-dbg
 do-build: do-meson do-ninja do-test
 do-test: do-ninja-test
@@ -69,8 +83,12 @@ tidy: \
 	do-build \
 	git-add
 dev: do-nodemon
-all: do-build 
-nodemon: clean all
+do-setup: do-clear python-venv
+do-clear:
+	@clear
+all: do-setup do-loc do-build 
+dev-nodemon: clean all
+nodemon: all
 meson-introspect-targets:
 	@meson introspect --targets -i meson.build
 meson-binaries:

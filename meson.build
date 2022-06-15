@@ -1,4 +1,4 @@
-project('c_microui',['c'],default_options:['warning_level=0','c_std=gnu99'])
+project('c_microui',['c'],default_options:['warning_level=0','c_std=gnu99'], version : '0.0.1')
 cc = meson.get_compiler('c')
 meson_deps_dir = meson.current_source_dir()
 timeout_bin = find_program('timeout', required : true)

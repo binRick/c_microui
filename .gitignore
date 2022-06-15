@@ -8,3 +8,4 @@ build
 scripts/
 .cache/
 .nodemon.log
+.venv/
