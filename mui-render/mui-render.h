@@ -1,4 +1,19 @@
 #pragma once
+#ifndef WINDOW_TITLE
+#define WINDOW_TITLE       "MUI Application"
+#endif
+#ifndef WINDOW_X_OFFSET
+#define WINDOW_X_OFFSET    670
+#endif
+#ifndef WINDOW_Y_OFFSET
+#define WINDOW_Y_OFFSET    100
+#endif
+#ifndef WINDOW_WIDTH
+#define WINDOW_WIDTH       1200
+#endif
+#ifndef WINDOW_HEIGHT
+#define WINDOW_HEIGHT      600
+#endif
 #include "mui/mui.h"
 
 void r_init(void);

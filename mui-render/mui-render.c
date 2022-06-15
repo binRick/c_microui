@@ -3,16 +3,31 @@
 #include <assert.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#define SDL_WINDOW_OPTIONS \
+  SDL_WINDOW_OPENGL        \
+  | SDL_WINDOW_ALLOW_HIGHDPI
+#define __SDL_WINDOW_ALWAYS_ON_TOP
+#define __SDL_WINDOW_BORDERLESS
+#ifdef WINDOW_BORDERLESS
+#undef __SDL_WINDOW_BORDERLESS
+#define __SDL_WINDOW_BORDERLESS    | SDL_WINDOW_BORDERLESS
+#endif
+#ifdef WINDOW_ALWAYS_ON_TOP
+#undef __SDL_WINDOW_ALWAYS_ON_TOP
+#define __SDL_WINDOW_ALWAYS_ON_TOP    | SDL_WINDOW_ALWAYS_ON_TOP
+#endif
+//#  | SDL_WINDOW_ALWAYS_ON_TOP
+//#  | SDL_WINDOW_BORDERLESS
 
 #define BUFFER_SIZE    16384
 
-static GLfloat    tex_buf[BUFFER_SIZE * 8];
+static GLfloat tex_buf[BUFFER_SIZE * 8];
 static GLfloat    vert_buf[BUFFER_SIZE * 8];
 static GLubyte    color_buf[BUFFER_SIZE * 16];
 static GLuint     index_buf[BUFFER_SIZE * 6];
 
-static int        width  = 800;
-static int        height = 600;
+static int        width  = WINDOW_WIDTH;
+static int        height = WINDOW_HEIGHT;
 static int        buf_idx;
 
 static SDL_Window *window;
@@ -21,9 +36,13 @@ static SDL_Window *window;
 void r_init(void) {
   /* init SDL window */
   window = SDL_CreateWindow(
-    NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-    width, height, SDL_WINDOW_OPENGL);
+    WINDOW_TITLE,
+    WINDOW_X_OFFSET, WINDOW_Y_OFFSET,
+    width, height, SDL_WINDOW_OPTIONS __SDL_WINDOW_ALWAYS_ON_TOP __SDL_WINDOW_BORDERLESS
+    );
   SDL_GL_CreateContext(window);
+  SDL_SetWindowIcon(window, SDL_LoadBMP("assets/window_icon.bmp"));
+
 
   /* init gl */
   glEnable(GL_BLEND);

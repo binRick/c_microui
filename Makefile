@@ -18,6 +18,8 @@ NM_TARGET=nodemon
 TIDIED_FILES = \
 			   *mui*/*.c *mui*/*.h
 ##############################################################
+run:
+	@$(DIR)/build/mui-test/mui-test
 python-venv: do-python-venv python-venv-meson
 do-python-venv:
 	@[[ -f $(VENV_DIR)/bin/activate ]] ||  { python3 -m venv $(VENV_DIR) && $(SOURCE_VENV_CMD) && pip3 install pip -U; }
