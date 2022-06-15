@@ -7,7 +7,7 @@ mui_inc = [
 mui_deps = [
 ]
 
-mui_lib = library('mui',
+mui_lib = static_library('mui',
   mui_srcs,
   install: false,
   dependencies: mui_deps,

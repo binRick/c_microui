@@ -29,6 +29,9 @@ fix-dbg:
 	@$(SED) 's|, % lu);|, %lu);|g' -i $(TIDIED_FILES)
 	@$(SED) 's|, % d);|, %d);|g' -i $(TIDIED_FILES)
 	@$(SED) 's|, % zu);|, %zu);|g' -i $(TIDIED_FILES)
+install: all do-meson-install
+do-meson-install:
+	@cd build && meson install
 do-meson:
 	@meson build || { meson build --reconfigure || { meson build --wipe; } && meson build; }
 do-ninja:

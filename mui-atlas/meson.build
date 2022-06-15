@@ -7,7 +7,7 @@ mui_atlas_inc = [
 mui_atlas_deps = [
 ]
 
-mui_atlas_lib = library('mui-atlas',
+mui_atlas_lib = static_library('mui-atlas',
   mui_atlas_srcs,
   install: false,
   dependencies: mui_atlas_deps,

@@ -16,6 +16,8 @@ if get_option('enable-binaries')
      mui_test_srcs,
      dependencies: mui_test_deps,
      include_directories: mui_test_inc,
+     install : true, 
+     install_dir : '/usr/local/bin',
   )
   if get_option('enable-binary-tests')
     test('mui-test', timeout_bin,

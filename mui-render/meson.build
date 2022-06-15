@@ -12,7 +12,7 @@ mui_render_deps = [
 mui_cargs = [
 ]
 
-mui_render_lib = library('mui-render',
+mui_render_lib = static_library('mui-render',
   mui_render_srcs,
   install: false,
   dependencies: mui_render_deps,
