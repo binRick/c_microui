@@ -1,6 +1,10 @@
 #include "mui-colors.h"
-#define MAX_COLORS      30000
+#define MAX_COLORS      100
 #define DEBUG_COLORS    false
+typedef struct {
+  int red, green, blue;
+} color_rgb_t;
+color_rgb_t get_color_name_rgb(const char *COLOR_NAME);
 int pid_pre();
 int pid_post(int);
 int load_colors_hash(ColorsDB *DB);
@@ -11,20 +15,21 @@ int load_color_names();
 char * get_color_hex_name(const char *COLOR_HEX);
 char * get_color_name_hex(const char *COLOR_NAME);
 char * get_color_name_row(const char *COLOR_NAME);
-
-typedef struct {
-  int red, green, blue;
-} color_rgb_t;
-color_rgb_t get_color_name_rgb(const char *COLOR_NAME);
+static void update_cur_color(const char *COLOR_NAME);
+static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME);
+void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
 
 
-static char            CUR_COLOR_HEX[32];
+static char            CUR_COLOR_HEX[32], CUR_COLOR_ROW[2048], CUR_COLOR_NAME[32] = "";
+static color_rgb_t     CUR_COLOR_RGB    = { 0, 0, 0 };
+static color_rgb_t     CUR_COLOR_RGB_BG = { 0, 0, 0 };
 static char            logbuf[64000];
 static int             logbuf_updated = 0;
 static float           bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 static float           bg_text[3]     = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 static float           OUTER_BG[3]    = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 volatile int           set_focus_qty  = 0;
+static size_t          colors_per_row = 3;
 ColorsDB               *DB;
 struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_HASH = { 0 };
 struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
@@ -45,17 +50,33 @@ static void test_window(mu_Context *ctx) {
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 230);
 
-    char *COLOR_NAME = "xxxxxxxx yyy zzz";
-    if (mu_header_ex(ctx, COLOR_NAME, MU_OPT_EXPANDED)) {
+    if (mu_header_ex(ctx, CUR_COLOR_NAME, MU_OPT_EXPANDED)) {
       mu_Container *win = mu_get_current_container(ctx);
       char         buf[64];
-      mu_layout_row(ctx, 4, (int[]) { 45, 160, 45, -1 }, 0);
+      mu_layout_row(ctx, 4, (int[]) { 110, 160, 110, -1 }, 0);
 
       mu_label(ctx, "Name:");
-      sprintf(buf, "%s", COLOR_NAME); mu_label(ctx, buf);
+      sprintf(buf, "%s", CUR_COLOR_NAME); mu_label(ctx, buf);
 
       mu_label(ctx, "Hex:");
-      sprintf(buf, "#%s", CUR_COLOR_HEX); mu_label(ctx, buf);
+      sprintf(buf, "%s", (char *)get_color_name_row_property(CUR_COLOR_NAME, "hex")); mu_label(ctx, buf);
+
+      mu_label(ctx, "Ansi Code:");
+      sprintf(buf, "%lu", (size_t)get_color_name_row_property(CUR_COLOR_NAME, "ansicode")); mu_label(ctx, buf);
+
+      mu_label(ctx, "RGB Total:");
+      sprintf(buf, "%lu",
+              (size_t)get_color_name_row_property(CUR_COLOR_NAME, "rgb.red")
+              + (size_t)get_color_name_row_property(CUR_COLOR_NAME, "rgb.green")
+              + (size_t)get_color_name_row_property(CUR_COLOR_NAME, "rgb.blue")
+              ); mu_label(ctx, buf);
+
+      mu_label(ctx, "RGB Background:");
+      sprintf(buf, "%d/%d/%d",
+              CUR_COLOR_RGB_BG.red,
+              CUR_COLOR_RGB_BG.green,
+              CUR_COLOR_RGB_BG.blue
+              ); mu_label(ctx, buf);
     }
 
     if (mu_header_ex(ctx, "RGB", MU_OPT_EXPANDED)) {
@@ -92,43 +113,22 @@ static void colors_window(mu_Context *ctx) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 100);
-    size_t colors_per_row = 9;
     size_t best_qty = 3000, recent_qty = 25, all_qty = 10000;
-    if (mu_header_ex(ctx, "Recent", MU_OPT_CLOSED)) {
-      mu_layout_row(ctx, colors_per_row, (int[]) {
-        60, 60, 60,
-        60, 60, 60,
-        60, 60, 60,
-      }, 0);
-      char color_name[1024], color_msg[1024];
-      for (size_t i = 0; i < (recent_qty); i++) {
-        sprintf(color_name, "color%lu", (i));
-        sprintf(color_msg, "pressed %s", color_name);
-        if (mu_button(ctx, color_name)) {
-          sprintf(CUR_COLOR_HEX, "%s", (char *)color_name);
-          write_log(color_msg);
-        }
-      }
-    }
     if (mu_header_ex(ctx, "Colors", MU_OPT_EXPANDED)) {
       for (size_t i = 0; i < COLOR_NAME_STRINGS.count; i++) {
-        if ((i % 3) == 0) {
+        if ((i % colors_per_row) == 0) {
           mu_layout_row(ctx, colors_per_row, (int[]) {
-            200, 200, 200,
+            WINDOW_WIDTH / colors_per_row - colors_per_row - 3,
+            WINDOW_WIDTH / colors_per_row - colors_per_row - 3,
+            WINDOW_WIDTH / colors_per_row - colors_per_row - 3,
           }, 0);
         }
         char color_name[strlen(COLOR_NAME_STRINGS.strings[i]) + 1];
         char color_msg[strlen(color_name) + 128];
         sprintf(color_name, "%s", COLOR_NAME_STRINGS.strings[i]);
-        char *color_hex = get_color_name_hex(color_name);
-        char *color_row = get_color_name_row(color_name);
-        sprintf(color_msg, "Loaded Hex '%s'", color_hex);
+        sprintf(color_msg, "Loaded Hex '%s'", get_color_name_hex(color_name));
         if (mu_button(ctx, color_name)) {
-          color_rgb_t color_rgb = get_color_name_rgb(color_name);
-          bg[0] = color_rgb.red;
-          bg[1] = color_rgb.green;
-          bg[2] = color_rgb.blue;
-          fprintf(stderr, "updated color to %s- %d/%d/%d\n", color_name, color_rgb.red, color_rgb.green, color_rgb.blue);
+          update_cur_color(color_name);
           write_log(color_msg);
         }
       }
@@ -136,6 +136,41 @@ static void colors_window(mu_Context *ctx) {
     mu_end_window(ctx);
   }
 } /* colors_window */
+
+
+static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME){
+  color_rgb_t bg_color = {
+    255,
+    255,
+    255,
+  };
+  color_rgb_t rgb = get_color_name_rgb(COLOR_NAME);
+
+  if (rgb.green > 160) {
+    bg_color.red   = 0;
+    bg_color.green = 0;
+    bg_color.blue  = 0;
+  }
+  return(bg_color);
+}
+
+
+static void update_cur_color(const char *COLOR_NAME){
+  sprintf(CUR_COLOR_NAME, "%s", COLOR_NAME);
+  sprintf(CUR_COLOR_HEX, "%s", get_color_name_hex(COLOR_NAME));
+  sprintf(CUR_COLOR_ROW, "%s", get_color_name_row(COLOR_NAME));
+  CUR_COLOR_RGB    = get_color_name_rgb(COLOR_NAME);
+  CUR_COLOR_RGB_BG = get_color_name_rgb_background(COLOR_NAME);
+  bg[0]            = CUR_COLOR_RGB.red;
+  bg[1]            = CUR_COLOR_RGB.green;
+  bg[2]            = CUR_COLOR_RGB.blue;
+  fprintf(stderr, "updated color to %s- |%s|%d/%d/%d|%s|\n",
+          CUR_COLOR_NAME,
+          CUR_COLOR_HEX,
+          CUR_COLOR_RGB.red, CUR_COLOR_RGB.green, CUR_COLOR_RGB.blue,
+          CUR_COLOR_ROW
+          );
+}
 
 
 static void log_window(mu_Context *ctx) {
@@ -421,6 +456,25 @@ char * get_color_name_hex(const char *COLOR_NAME){
 }
 
 
+void * get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY){
+  void        *res = NULL;
+  JSON_Value  *V;
+  JSON_Value  *ROW = json_parse_string(get_color_name_row(COLOR_NAME));
+  JSON_Object *O   = json_value_get_object(ROW);
+
+  V = json_object_dotget_value(O, ROW_PROPERTY);
+  switch (json_value_get_type(V)) {
+  case JSONString:
+    res = (void *)((char *)json_value_get_string(V));
+    break;
+  case JSONNumber:
+    res = (void *)((int)json_value_get_number(V));
+    break;
+  }
+  return((void *)res);
+}
+
+
 char * get_color_name_row(const char *COLOR_NAME){
   struct djbhash_node *HASH_ITEM;
 
@@ -539,6 +593,9 @@ int load_colors_hash(){
             const char *color_name = json_object_get_string(ColorObject, "name");
             const char *color_hex  = json_object_get_string(ColorObject, "hex");
             if ((HASH_ITEM = djbhash_find(&COLORS_HASH, (char *)color_name)) == NULL) {
+              if (strcmp(CUR_COLOR_NAME, "") == 0) {
+                sprintf(CUR_COLOR_NAME, "%s", color_name);
+              }
               djbhash_set(&COLORS_HASH, (char *)color_name, (void *)row_data, DJBHASH_OTHER);
               djbhash_set(&COLOR_NAME_HASH, (char *)color_name, (char *)color_hex, DJBHASH_STRING);
               djbhash_set(&COLOR_HEX_HASH, (char *)color_hex, (char *)color_name, DJBHASH_STRING);
