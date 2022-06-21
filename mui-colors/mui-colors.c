@@ -1,9 +1,11 @@
 #include "mui-colors.h"
-#define MAX_COLORS      100
+#define MAX_COLORS      1000
 #define DEBUG_COLORS    false
+//////////////////////////////////////////////////////////////////////////
 typedef struct {
   int red, green, blue;
 } color_rgb_t;
+//////////////////////////////////////////////////////////////////////////
 color_rgb_t get_color_name_rgb(const char *COLOR_NAME);
 int pid_pre();
 int pid_post(int);
@@ -14,12 +16,15 @@ void iterate_color_hex_strings();
 int load_color_names();
 char * get_color_hex_name(const char *COLOR_HEX);
 char * get_color_name_hex(const char *COLOR_NAME);
-char * get_color_name_row(const char *COLOR_NAME);
+static char * get_color_name_row(const char *COLOR_NAME);
 static void update_cur_color(const char *COLOR_NAME);
 static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME);
-void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
+static void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
+
+//////////////////////////////////////////////////////////////////////////
 
 
+//////////////////////////////////////////////////////////////////////////
 static char            CUR_COLOR_HEX[32], CUR_COLOR_ROW[2048], CUR_COLOR_NAME[32] = "";
 static color_rgb_t     CUR_COLOR_RGB    = { 0, 0, 0 };
 static color_rgb_t     CUR_COLOR_RGB_BG = { 0, 0, 0 };
@@ -30,9 +35,11 @@ static float           bg_text[3]     = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROU
 static float           OUTER_BG[3]    = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 volatile int           set_focus_qty  = 0;
 static size_t          colors_per_row = 3;
+//////////////////////////////////////////////////////////////////////////
 ColorsDB               *DB;
 struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_HASH = { 0 };
 struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
+//////////////////////////////////////////////////////////////////////////
 
 
 static void write_log(const char *text) {
@@ -456,7 +463,7 @@ char * get_color_name_hex(const char *COLOR_NAME){
 }
 
 
-void * get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY){
+static void * get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY){
   void        *res = NULL;
   JSON_Value  *V;
   JSON_Value  *ROW = json_parse_string(get_color_name_row(COLOR_NAME));
@@ -467,15 +474,18 @@ void * get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPE
   case JSONString:
     res = (void *)((char *)json_value_get_string(V));
     break;
+  case JSONBoolean:
+    res = (void *)((size_t)json_value_get_boolean(V));
+    break;
   case JSONNumber:
-    res = (void *)((int)json_value_get_number(V));
+    res = (void *)((size_t)json_value_get_number(V));
     break;
   }
   return((void *)res);
 }
 
 
-char * get_color_name_row(const char *COLOR_NAME){
+static char * get_color_name_row(const char *COLOR_NAME){
   struct djbhash_node *HASH_ITEM;
 
   HASH_ITEM = djbhash_find(&COLORS_HASH, (char *)COLOR_NAME);
