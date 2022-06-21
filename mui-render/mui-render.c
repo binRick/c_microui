@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+
+#define IMG_PATH           "/tmp/a.png"
+#define CREATE_RENDERER    true
 #define SDL_WINDOW_OPTIONS \
-  SDL_WINDOW_OPENGL        \
-  | SDL_WINDOW_ALLOW_HIGHDPI
+  SDL_WINDOW_ALLOW_HIGHDPI
 #define __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_ALWAYS_ON_TOP
 #define __SDL_WINDOW_BORDERLESS
@@ -38,6 +40,8 @@ static int          buf_idx;
 
 static SDL_Window   *window;
 static SDL_Renderer *renderer;
+static SDL_Texture  *texture;
+static int          w, h;
 
 
 static void screenshot(SDL_Renderer *renderer, const char *filename) {
@@ -95,13 +99,19 @@ void r_init(void) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   assert(glGetError() == 0);
-
-  if (false) {
-    renderer = SDL_CreateRenderer(
-      window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (CREATE_RENDERER) {
+    renderer = SDL_GetRenderer(window);
     if (renderer == NULL) {
-      SDL_Log("unable to create renderer: %s", SDL_GetError());
-      //exit(1);
+      fprintf(stderr, "unable to create renderer: %s\n", SDL_GetError());
+    }else{
+      fprintf(stderr, "created renderer.................\n");
+      texture = IMG_LoadTexture(renderer, IMG_PATH);
+      if (!texture) {
+        SDL_Log("Couldn't load %s: %s\n", IMG_PATH, SDL_GetError());
+      }else{
+        SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+        printf("w:%d|h:%d\n", w, h);
+      }
     }
   }
 } /* r_init */

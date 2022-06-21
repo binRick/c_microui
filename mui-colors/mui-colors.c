@@ -604,7 +604,7 @@ int load_colors_hash(){
             const char *color_hex  = json_object_get_string(ColorObject, "hex");
             if ((HASH_ITEM = djbhash_find(&COLORS_HASH, (char *)color_name)) == NULL) {
               if (strcmp(CUR_COLOR_NAME, "") == 0) {
-                sprintf(CUR_COLOR_NAME, "%s", color_name);
+                update_cur_color(color_name);
               }
               djbhash_set(&COLORS_HASH, (char *)color_name, (void *)row_data, DJBHASH_OTHER);
               djbhash_set(&COLOR_NAME_HASH, (char *)color_name, (char *)color_hex, DJBHASH_STRING);

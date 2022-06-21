@@ -5,6 +5,8 @@ mui_inc = [
  inc,
 ]
 mui_deps = [
+  sdl2_image_dep,
+  sdl2_dep,
 ]
 
 mui_lib = static_library('mui',

@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #define MU_VERSION                "2.01"
 
 #define MU_COMMANDLIST_SIZE       (256 * 1024)

@@ -4,3 +4,6 @@
 [submodule "submodules/c_colors"]
 	path = submodules/c_colors
 	url = ssh://git@github.com/binRick/c_colors
+[submodule "submodules/SDL_image"]
+	path = submodules/SDL_image
+	url = https://github.com/libsdl-org/SDL_image
