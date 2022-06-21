@@ -95,11 +95,13 @@ do-clear:
 	@clear
 all: do-setup do-loc do-build 
 dev-nodemon: clean all
-nodemon: all #do-mui-meson-repos
+nodemon: all
 meson-introspect-targets:
 	@meson introspect --targets -i meson.build
 meson-binaries:
 	@meson introspect --targets  meson.build -i | jq 'map(select(.type == "executable").filename)|flatten|join("\n")' -Mrc
 do-mui-meson-repos:
 	@./build/mui-meson-repos/mui-meson-repos
+do-mui-colors-test:
+	@./build/mui-colors-test/mui-colors-test
 

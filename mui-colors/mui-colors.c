@@ -1,8 +1,33 @@
 #include "mui-colors.h"
+#define MAX_COLORS      30000
+#define DEBUG_COLORS    false
+int pid_pre();
+int pid_post(int);
+int load_colors_hash(ColorsDB *DB);
+void iterate_colors_hash();
+void iterate_color_name_strings();
+void iterate_color_hex_strings();
+int load_color_names();
+char * get_color_hex_name(const char *COLOR_HEX);
+char * get_color_name_hex(const char *COLOR_NAME);
+char * get_color_name_row(const char *COLOR_NAME);
 
-static char  logbuf[64000];
-static int   logbuf_updated = 0;
-static float bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+typedef struct {
+  int red, green, blue;
+} color_rgb_t;
+color_rgb_t get_color_name_rgb(const char *COLOR_NAME);
+
+
+static char            CUR_COLOR_HEX[32];
+static char            logbuf[64000];
+static int             logbuf_updated = 0;
+static float           bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+static float           bg_text[3]     = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+static float           OUTER_BG[3]    = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+volatile int           set_focus_qty  = 0;
+ColorsDB               *DB;
+struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_HASH = { 0 };
+struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
 
 
 static void write_log(const char *text) {
@@ -15,51 +40,43 @@ static void write_log(const char *text) {
 
 
 static void test_window(mu_Context *ctx) {
-  /* do window */
-  if (mu_begin_window(ctx, "Meson Repos", mu_rect(10, 10, WINDOW_WIDTH, 405))) {
+  if (mu_begin_window(ctx, "Color Info", mu_rect(10, 190, WINDOW_WIDTH, 200))) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
-    win->rect.h = mu_max(win->rect.h, 300);
+    win->rect.h = mu_max(win->rect.h, 230);
 
-    /* window info */
-    if (mu_header_ex(ctx, "Repo #1", MU_OPT_EXPANDED)) {
-      char         *REPO_NAME = "my repo name 1";
-      mu_Container *win       = mu_get_current_container(ctx);
+    char *COLOR_NAME = "xxxxxxxx yyy zzz";
+    if (mu_header_ex(ctx, COLOR_NAME, MU_OPT_EXPANDED)) {
+      mu_Container *win = mu_get_current_container(ctx);
       char         buf[64];
-      mu_layout_row(ctx, 2, (int[]) { 54, -1 }, 0);
+      mu_layout_row(ctx, 4, (int[]) { 45, 160, 45, -1 }, 0);
 
       mu_label(ctx, "Name:");
-      sprintf(buf, "%s", REPO_NAME); mu_label(ctx, buf);
+      sprintf(buf, "%s", COLOR_NAME); mu_label(ctx, buf);
 
-      mu_label(ctx, "Size:");
-      sprintf(buf, "%d, %d", win->rect.w, win->rect.h); mu_label(ctx, buf);
-      mu_label(ctx, "Path:");
-      sprintf(buf, "%d, %d", win->rect.w, win->rect.h); mu_label(ctx, buf);
-      write_log(REPO_NAME);
+      mu_label(ctx, "Hex:");
+      sprintf(buf, "#%s", CUR_COLOR_HEX); mu_label(ctx, buf);
     }
 
-    /* labels + buttons */
-    if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
-      mu_layout_row(ctx, 3, (int[]) { 86, -110, -1 }, 0);
-      mu_label(ctx, "Test buttons 1:");
-      if (mu_button(ctx, "Button 1")) {
-        write_log("Pressed button 1");
-      }
-      if (mu_button(ctx, "Button 2")) {
-        write_log("Pressed button 2");
-      }
-      mu_label(ctx, "Test buttons 2:");
-      if (mu_button(ctx, "Button 3")) {
-        write_log("Pressed button 3");
-      }
-      if (mu_button(ctx, "Popup")) {
-        mu_open_popup(ctx, "Test Popup");
-      }
-      if (mu_begin_popup(ctx, "Test Popup")) {
-        mu_button(ctx, "Hello");
-        mu_button(ctx, "World");
-        mu_end_popup(ctx);
-      }
+    if (mu_header_ex(ctx, "RGB", MU_OPT_EXPANDED)) {
+      mu_layout_row(ctx, 2, (int[]) { -78, -1 }, 74);
+      mu_layout_begin_column(ctx);
+      mu_layout_row(ctx, 2, (int[]) { 46, -1 }, 0);
+      mu_label(ctx, "Red:");   mu_slider(ctx, &bg[0], 0, 255);
+      mu_label(ctx, "Green:"); mu_slider(ctx, &bg[1], 0, 255);
+      mu_label(ctx, "Blue:");  mu_slider(ctx, &bg[2], 0, 255);
+      mu_layout_end_column(ctx);
+      mu_Rect r = mu_layout_next(ctx);
+      mu_draw_rect(ctx, r, mu_color(
+                     bg[0],
+                     bg[1],
+                     bg[2],
+                     255
+                     )
+                   );
+      char buf[32];
+      sprintf(buf, "#%02X%02X%02X", (int)bg_text[0], (int)bg_text[1], (int)bg_text[2]);
+      mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
     }
 
     /* tree */
@@ -70,8 +87,59 @@ static void test_window(mu_Context *ctx) {
 } /* test_window */
 
 
+static void colors_window(mu_Context *ctx) {
+  if (mu_begin_window(ctx, "Colors", mu_rect(10, 10, WINDOW_WIDTH, 175))) {
+    mu_Container *win = mu_get_current_container(ctx);
+    win->rect.w = mu_max(win->rect.w, 240);
+    win->rect.h = mu_max(win->rect.h, 100);
+    size_t colors_per_row = 9;
+    size_t best_qty = 3000, recent_qty = 25, all_qty = 10000;
+    if (mu_header_ex(ctx, "Recent", MU_OPT_CLOSED)) {
+      mu_layout_row(ctx, colors_per_row, (int[]) {
+        60, 60, 60,
+        60, 60, 60,
+        60, 60, 60,
+      }, 0);
+      char color_name[1024], color_msg[1024];
+      for (size_t i = 0; i < (recent_qty); i++) {
+        sprintf(color_name, "color%lu", (i));
+        sprintf(color_msg, "pressed %s", color_name);
+        if (mu_button(ctx, color_name)) {
+          sprintf(CUR_COLOR_HEX, "%s", (char *)color_name);
+          write_log(color_msg);
+        }
+      }
+    }
+    if (mu_header_ex(ctx, "Colors", MU_OPT_EXPANDED)) {
+      for (size_t i = 0; i < COLOR_NAME_STRINGS.count; i++) {
+        if ((i % 3) == 0) {
+          mu_layout_row(ctx, colors_per_row, (int[]) {
+            200, 200, 200,
+          }, 0);
+        }
+        char color_name[strlen(COLOR_NAME_STRINGS.strings[i]) + 1];
+        char color_msg[strlen(color_name) + 128];
+        sprintf(color_name, "%s", COLOR_NAME_STRINGS.strings[i]);
+        char *color_hex = get_color_name_hex(color_name);
+        char *color_row = get_color_name_row(color_name);
+        sprintf(color_msg, "Loaded Hex '%s'", color_hex);
+        if (mu_button(ctx, color_name)) {
+          color_rgb_t color_rgb = get_color_name_rgb(color_name);
+          bg[0] = color_rgb.red;
+          bg[1] = color_rgb.green;
+          bg[2] = color_rgb.blue;
+          fprintf(stderr, "updated color to %s- %d/%d/%d\n", color_name, color_rgb.red, color_rgb.green, color_rgb.blue);
+          write_log(color_msg);
+        }
+      }
+    }
+    mu_end_window(ctx);
+  }
+} /* colors_window */
+
+
 static void log_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Log Window", mu_rect(10, 425, WINDOW_WIDTH, 150))) {
+  if (mu_begin_window(ctx, "Log", mu_rect(10, 425, WINDOW_WIDTH, 150))) {
     /* output text panel */
     mu_layout_row(ctx, 1, (int[]) { -1 }, -25);
     mu_begin_panel(ctx, "Log Output");
@@ -155,6 +223,7 @@ static void style_window(mu_Context *ctx) {
 
 static void process_frame(mu_Context *ctx) {
   mu_begin(ctx);
+  colors_window(ctx);
   log_window(ctx);
   test_window(ctx);
   mu_end(ctx);
@@ -192,13 +261,24 @@ static int text_height(mu_Font font) {
 }
 
 
+int pid_post(int pid){
+  printf("setting focused process to pid %d.....\n", pid);
+  bool ok = set_focused_pid(pid);
+  printf("set ok:%d\n", ok);
+  return(ok);
+}
+
+
 int mui_colors(){
+  int focused_pid = pid_pre();
+
   /* init SDL and renderer */
   SDL_Init(SDL_INIT_EVERYTHING);
   r_init();
 
   /* init microui */
   mu_Context *ctx = malloc(sizeof(mu_Context));
+
   mu_init(ctx);
   ctx->text_width  = text_width;
   ctx->text_height = text_height;
@@ -243,12 +323,16 @@ int mui_colors(){
       }
       }
     }
+    if (set_focus_qty < 1) {
+      pid_post(focused_pid);
+      set_focus_qty++;
+    }
 
     /* process frame */
     process_frame(ctx);
 
     /* render */
-    r_clear(mu_color(bg[0], bg[1], bg[2], 255));
+    r_clear(mu_color(OUTER_BG[0], OUTER_BG[1], OUTER_BG[2], 255));
     mu_Command *cmd = NULL;
     while (mu_next_command(ctx, &cmd)) {
       switch (cmd->type) {
@@ -264,3 +348,220 @@ int mui_colors(){
   return(0);
 } /* main */
 
+
+int pid_pre(){
+  int focused_pid = get_focused_pid();
+
+  fprintf(stderr, "found focused pid to be %d.....\n", focused_pid);
+  DB = malloc(sizeof(ColorsDB));
+  char *Path = malloc(strlen(COLOR_NAMES_DB_PATH));
+
+  sprintf(Path, "%s", COLOR_NAMES_DB_PATH);
+  DB->Path = strdup(Path);
+  free(Path);
+
+  if (init_colors_db(DB) == 0) {
+    int colors_qty = load_colors_hash(DB);
+    printf("loaded %d colors to hash\n", colors_qty);
+    load_color_names();
+
+    printf("loaded %d color names\n", COLOR_NAME_STRINGS.count);
+    iterate_color_name_strings();
+
+    printf("loaded %d color hexes\n", COLOR_HEX_STRINGS.count);
+    iterate_color_hex_strings();
+  }
+
+  return(focused_pid);
+}
+
+
+color_rgb_t get_color_name_rgb(const char *COLOR_NAME){
+  struct djbhash_node *HASH_ITEM;
+  color_rgb_t         color_rgb  = { 0, 0, 0 };
+  char                *color_row = get_color_name_row(COLOR_NAME);
+
+  if (color_row == NULL) {
+    return(color_rgb);
+  }
+  JSON_Value  *ColorLine;
+  JSON_Object *ColorObject;
+
+  ColorLine       = json_parse_string(color_row);
+  ColorObject     = json_value_get_object(ColorLine);
+  color_rgb.red   = json_object_dotget_number(ColorObject, "rgb.red");
+  color_rgb.green = json_object_dotget_number(ColorObject, "rgb.green");
+  color_rgb.blue  = json_object_dotget_number(ColorObject, "rgb.blue");
+  if (ColorLine) {
+    json_value_free(ColorLine);
+  }
+  return(color_rgb);
+}
+
+
+char * get_color_hex_name(const char *COLOR_HEX){
+  struct djbhash_node *HASH_ITEM;
+
+  HASH_ITEM = djbhash_find(&COLOR_HEX_HASH, (char *)COLOR_HEX);
+  if (HASH_ITEM == NULL) {
+    return(NULL);
+  }
+  return((char *)((HASH_ITEM)->value));
+}
+
+
+char * get_color_name_hex(const char *COLOR_NAME){
+  struct djbhash_node *HASH_ITEM;
+
+  HASH_ITEM = djbhash_find(&COLOR_NAME_HASH, (char *)COLOR_NAME);
+  if (HASH_ITEM == NULL) {
+    return(NULL);
+  }
+  return((char *)((HASH_ITEM)->value));
+}
+
+
+char * get_color_name_row(const char *COLOR_NAME){
+  struct djbhash_node *HASH_ITEM;
+
+  HASH_ITEM = djbhash_find(&COLORS_HASH, (char *)COLOR_NAME);
+  if (HASH_ITEM == NULL) {
+    return(NULL);
+  }
+  return((char *)((HASH_ITEM)->value));
+}
+
+
+int load_color_names(){
+  struct StringBuffer *NAME_STRINGS = stringbuffer_new();
+  struct StringBuffer *HEX_STRINGS  = stringbuffer_new();
+  struct djbhash_node *item         = djbhash_iterate(&COLORS_HASH);
+  JSON_Value          *ColorLine;
+  JSON_Object         *ColorObject;
+  size_t              qty = 0;
+
+  while (item) {
+    char *row_data = (char *)((item)->value);
+    if (strlen(row_data) > 0) {
+      if (DEBUG_COLORS) {
+        fprintf(stderr, "\t  - " AC_RESETALL AC_GREEN AC_ITALIC "#%lu> %s" AC_RESETALL "\n", qty, row_data);
+      }
+      ColorLine   = json_parse_string(row_data);
+      ColorObject = json_value_get_object(ColorLine);
+      const char *color_name = json_object_get_string(ColorObject, "name");
+      const char *hex_string = json_object_get_string(ColorObject, "hex");
+      stringbuffer_append_string(NAME_STRINGS, stringfn_trim(color_name));
+      stringbuffer_append_string(NAME_STRINGS, "\n");
+      stringbuffer_append_string(HEX_STRINGS, stringfn_trim(hex_string));
+      stringbuffer_append_string(HEX_STRINGS, "\n");
+      item = djbhash_iterate(&COLORS_HASH);
+      qty++;
+    }
+  }
+  COLOR_NAME_STRINGS = stringfn_split_lines(stringfn_trim(stringbuffer_to_string(NAME_STRINGS)));
+  COLOR_HEX_STRINGS  = stringfn_split_lines(stringfn_trim(stringbuffer_to_string(HEX_STRINGS)));
+  stringbuffer_release(NAME_STRINGS);
+  stringbuffer_release(HEX_STRINGS);
+  if (ColorLine) {
+    json_value_free(ColorLine);
+  }
+  return(qty);
+}
+
+
+void iterate_color_hex_strings(){
+  for (size_t i = 0; i < COLOR_HEX_STRINGS.count; i++) {
+    char *color_name = get_color_hex_name(COLOR_HEX_STRINGS.strings[i]);
+    char *color_row  = get_color_name_row(color_name);
+    if (DEBUG_COLORS) {
+      fprintf(stderr, "\t  - " AC_RESETALL AC_CYAN AC_ITALIC "#%lu> %s|%s- %s" AC_RESETALL "\n",
+              i,
+              COLOR_HEX_STRINGS.strings[i],
+              color_name,
+              color_row
+              );
+    }
+  }
+}
+
+
+void iterate_color_name_strings(){
+  for (size_t i = 0; i < COLOR_NAME_STRINGS.count; i++) {
+    char *color_hex = get_color_name_hex(COLOR_NAME_STRINGS.strings[i]);
+    char *color_row = get_color_name_row(COLOR_NAME_STRINGS.strings[i]);
+    if (DEBUG_COLORS) {
+      fprintf(stderr, "\t  - " AC_RESETALL AC_CYAN AC_ITALIC "#%lu> %s|%s- %s" AC_RESETALL "\n",
+              i,
+              COLOR_NAME_STRINGS.strings[i],
+              color_hex,
+              color_row
+              );
+    }
+  }
+}
+
+
+void iterate_colors_hash(){
+  for (size_t i = 0; i < COLOR_HEX_STRINGS.count; i++) {
+    fprintf(stderr, "\t  - " AC_RESETALL AC_CYAN AC_ITALIC "#%lu> %s" AC_RESETALL "\n", i, COLOR_HEX_STRINGS.strings[i]);
+  }
+}
+
+
+int load_colors_hash(){
+  struct djbhash_node *HASH_ITEM;
+
+  djbhash_init(&COLORS_HASH);
+  djbhash_init(&COLOR_NAME_HASH);
+  djbhash_init(&COLOR_HEX_HASH);
+  int    qty;
+  size_t total_ids = 0, unique_typeids_qty = 0, typeid_qty = 0, type_ids_size = 0, type_ids_qty = 0, unique_typeids_size = 0;
+  char   *unique_typeids = (char *)colordb_get_distinct_typeids(DB->db, &unique_typeids_size, &unique_typeids_qty);
+
+  fprintf(stderr, "read %lu bytes from %lu items\n", unique_typeids_size, unique_typeids_qty);
+  size_t      row_type_ids_size = 0, row_type_ids_qty = 0, row_data_size = 0;
+  JSON_Value  *ColorLine;
+  JSON_Object *ColorObject;
+
+  for (size_t processed_items = 0; (processed_items < unique_typeids_qty) && (qty <= MAX_COLORS); ) {
+    if ((unique_typeids != NULL) && strlen(unique_typeids) > 0) {
+      colordb_type row_typeid = atoi(unique_typeids);
+      row_data_size = 0;
+      char         *id_type_ids = (char *)colordb_get_typeid_ids(DB->db, row_typeid, &row_type_ids_size, &row_type_ids_qty);
+      for (size_t _processed_items = 0; (_processed_items < row_type_ids_qty) && (_processed_items < MAX_COLORS); ) {
+        if (strlen(id_type_ids) > 0) {
+          int row_id = atoi(id_type_ids);
+          if (row_id >= 0) {
+            size_t row_data_size = 0;
+            char   *row_data     = colordb_get(DB->db, row_id, &row_data_size);
+            ColorLine   = json_parse_string(row_data);
+            ColorObject = json_value_get_object(ColorLine);
+            const char *color_name = json_object_get_string(ColorObject, "name");
+            const char *color_hex  = json_object_get_string(ColorObject, "hex");
+            if ((HASH_ITEM = djbhash_find(&COLORS_HASH, (char *)color_name)) == NULL) {
+              djbhash_set(&COLORS_HASH, (char *)color_name, (void *)row_data, DJBHASH_OTHER);
+              djbhash_set(&COLOR_NAME_HASH, (char *)color_name, (char *)color_hex, DJBHASH_STRING);
+              djbhash_set(&COLOR_HEX_HASH, (char *)color_hex, (char *)color_name, DJBHASH_STRING);
+              qty++;
+            }
+          }
+          id_type_ids += strlen(id_type_ids);
+          _processed_items++;
+        }else{
+          id_type_ids++;
+        }
+      }
+      unique_typeids += strlen(unique_typeids);
+      processed_items++;
+    }else{
+      unique_typeids++;
+    }
+  }
+  djbhash_reset_iterator(&COLORS_HASH);
+  djbhash_reset_iterator(&COLOR_NAME_HASH);
+  djbhash_reset_iterator(&COLOR_NAME_HASH);
+  if (ColorLine) {
+    json_value_free(ColorLine);
+  }
+  return(qty);
+} /* load_colors_hash */

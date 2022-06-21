@@ -7,11 +7,30 @@ mui_colors_inc = [
  '../mui-colors',
  '../mui',
  '../mui-render',
+ '../submodules/meson_deps/submodules/c_darwin/active-app',
+ '../submodules/meson_deps/submodules/c_darwin',
+ '../submodules/meson_deps/submodules/djbhash',
+ '../submodules/meson_deps/submodules/djbhash/src',
 ]
 mui_colors_deps = [
- sdl2_dep,
- mui_dep,
- mui_render_dep,
+   djbhash_dep,
+   sdl2_dep,
+   mui_dep,
+   mui_render_dep,
+   active_app_dep,
+   cargs_dep,
+   colors_csv_parser_dep,
+   colors_json_parser_dep,
+   c_stringfn_dep,
+   parson_dep,
+   fs_dep,
+   rgba_dep,
+   ansi_codes_dep,
+   ansi_rgb_utils_dep,
+   bytes_dep,
+   c_string_buffer_dep,
+   db_dep,
+   ansi_utils_deps, 
 ]
 
 
