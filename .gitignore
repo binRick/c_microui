@@ -17,3 +17,8 @@ subprojects/*/*
 subprojects/cargs
 subprojects/cgif
 subprojects/libspng
+.attic1/
+.make-log-*
+.make-log-*
+.DU
+.make-*log*
