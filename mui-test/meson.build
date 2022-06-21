@@ -11,12 +11,6 @@ mui_test_deps = [
  mui_render_dep,
 ]
 
-#install_subdir('assets', install_dir: 'share')
-
-#configure_file(input : '../assets/window_icon.bmp',
-#               output : 'window_icon.bmp',
-#               configuration : configuration_data())
-
 if get_option('enable-binaries')
   mui_test_exec = executable('mui-test',
      mui_test_srcs,
@@ -26,6 +20,7 @@ if get_option('enable-binaries')
      install_dir : '/usr/local/bin',
   )
   if get_option('enable-binary-tests')
+   if get_option('enable-mui-test')
     if get_option('timeout-test')
       test('mui-test', timeout_bin,
         args: [
@@ -40,5 +35,6 @@ if get_option('enable-binaries')
         ]
       )
     endif
+   endif
   endif
 endif

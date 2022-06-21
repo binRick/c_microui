@@ -1,0 +1,4 @@
+[wrap-git]
+directory=libspng
+url=https://github.com/randy408/libspng
+revision=head

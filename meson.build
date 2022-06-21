@@ -4,7 +4,8 @@ timeout_bin = find_program('timeout', required : true)
 sdl2_dep = dependency('sdl2',fallback:['sdl2', 'sdl2'], required: true)
 #############################################################
 cc = meson.get_compiler('c')
-meson_deps_dir = meson.current_source_dir()
+meson_deps_dir = join_paths(meson.current_source_dir(),'submodules/meson_deps')
+pwd = join_paths(meson.current_source_dir(),'submodules/meson_deps')
 mui_global_linkflags = ['-Wl,-framework,OpenGL']
 add_project_link_arguments(mui_global_linkflags, language : ['c'])
 #############################################################
@@ -28,6 +29,7 @@ configure_file(
   copy: true,
 )
 #//////////////////
+subdir('submodules')
 
 
 
@@ -38,4 +40,9 @@ subdir('mui-atlas')
 subdir('mui-render')
 #//////////////////
 subdir('mui-test')
+#//////////////////
+subdir('mui-meson-repos')
+#//////////////////
+subdir('mui-colors')
+subdir('mui-colors-test')
 #//////////////////

@@ -9,3 +9,11 @@ scripts/
 .cache/
 .nodemon.log
 .venv/
+etc/colornames.*
+subprojects/*/*/
+subprojects/*/*
+subprojects/*/*/*
+subprojects/*/*
+subprojects/cargs
+subprojects/cgif
+subprojects/libspng

@@ -1,0 +1,4 @@
+[wrap-git]
+directory=cgif
+url=https://github.com/dloebl/cgif
+revision=head
