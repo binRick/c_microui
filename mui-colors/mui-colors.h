@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define COLOR_NAMES_DB_PATH    "./submodules/c_colors/etc/colornames.bestof.sqlite"
+#define COLOR_NAMES_DB_PATH    "etc/colornames.bestof.sqlite"
 #include "mui-render-options.h"
 #include "mui-render.h"
 #include "mui.h"

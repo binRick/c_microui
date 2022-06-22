@@ -12,13 +12,22 @@ sdl2_image_dep = dependency('sdl2_image',fallback:['sdl2_image', 'sdl2_image'], 
 #############################################################
 inc = [
   '.',
+  './submodules/meson_deps/submodules/c_darwin',
+  './submodules/meson_deps/submodules/c_darwin/active-app',
+  './submodules/meson_deps/submodules/djbhash',
+  './submodules/meson_deps/submodules/djbhash/src',
+  './submodules/meson_deps/submodules/c_ansi',
+  './submodules/meson_deps/submodules/c_ansi/ansi-codes',
   include_directories('.','vendor','vendor/sqlite'),
   include_directories('./mui','./mui-render'),
   './mui-atlas',
   './mui',
   './submodules',
+  './submodules/meson_deps/submodules/c_ansi',
+  './submodules/meson_deps/submodules/c_ansi/ansi-codes',
+  './submodules/meson_deps/submodules/c_darwin',
+  './submodules/meson_deps/submodules/c_darwin/active-app',
   './submodules/meson_deps',
-  './submodules/meson_deps/submodules',
   './submodules/meson_deps/meson',
   include_directories(
     './submodules',
@@ -51,6 +60,6 @@ subdir('mui-test')
 #//////////////////
 subdir('mui-meson-repos')
 #//////////////////
-#subdir('mui-colors')
-#subdir('mui-colors-test')
+subdir('mui-colors')
+subdir('mui-colors-test')
 #//////////////////
