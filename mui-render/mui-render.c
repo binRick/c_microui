@@ -1,5 +1,6 @@
-#include "mui-atlas.h"
-#include "mui-render.h"
+#pragma once
+#include "../mui-atlas/mui-atlas.h"
+#include "../mui-render/mui-render.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>

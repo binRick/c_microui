@@ -4,6 +4,10 @@ mui_test_srcs = [
 ]
 mui_test_inc = [
  inc,
+ '../mui-render',
+ '../mui',
+ '../mui-atlas',
+ '../',
 ]
 mui_test_deps = [
  sdl2_dep,

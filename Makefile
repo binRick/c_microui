@@ -87,8 +87,7 @@ build: do-meson do-build
 ansi: all do-sync do-ansi-make
 tidy: \
 	do-uncrustify \
-	do-build \
-	git-add
+	do-build
 dev: clean do-nodemon
 do-setup: do-clear python-venv
 do-clear:

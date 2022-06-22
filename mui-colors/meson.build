@@ -4,13 +4,15 @@ mui_colors_srcs = [
 ]
 mui_colors_inc = [
  inc,
- '../mui-colors',
- '../mui',
- '../mui-render',
- '../submodules/meson_deps/submodules/c_darwin/active-app',
- '../submodules/meson_deps/submodules/c_darwin',
- '../submodules/meson_deps/submodules/djbhash',
- '../submodules/meson_deps/submodules/djbhash/src',
+ 'mui-colors',
+ 'mui-atlas',
+ 'mui',
+ 'mui-render',
+ 'submodules/meson_deps/submodules/c_darwin/active-app',
+ 'submodules/meson_deps/submodules/c_darwin',
+ 'submodules/meson_deps/submodules/c_ansi',
+ 'submodules/meson_deps/submodules/djbhash',
+ 'submodules/meson_deps/submodules/djbhash/src',
 ]
 mui_colors_deps = [
    djbhash_dep,

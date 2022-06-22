@@ -3,6 +3,10 @@ mui_render_srcs = [
 ]
 mui_render_inc = [
  inc,
+ '../',
+ '../mui',
+ '../mui-render',
+ '../mui-atlas',
 ]
 mui_render_deps = [
   sdl2_dep,

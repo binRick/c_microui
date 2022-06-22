@@ -4,6 +4,9 @@ mui_meson_repos_srcs = [
 ]
 mui_meson_repos_inc = [
  inc,
+ '../mui-render',
+ '../mui-atlas',
+ '../',
 ]
 mui_meson_repos_deps = [
  sdl2_dep,

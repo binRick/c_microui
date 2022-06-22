@@ -1,6 +1,6 @@
 #pragma once
 //#include "../submodules/SDL_image/SDL_image.h"
-#include "mui-render/mui-render-options.h"
+#include "mui-render-options.h"
 #include "mui/mui.h"
 
 void r_init(void);

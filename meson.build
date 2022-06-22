@@ -11,11 +11,20 @@ sdl2_dep = dependency('sdl2',fallback:['sdl2', 'sdl2'], required: true)
 sdl2_image_dep = dependency('sdl2_image',fallback:['sdl2_image', 'sdl2_image'], required: true)
 #############################################################
 inc = [
+  '.',
+  include_directories('.','vendor','vendor/sqlite'),
   include_directories('./mui','./mui-render'),
-  include_directories('./mui-atlas'),
+  './mui-atlas',
+  './mui',
+  './submodules',
+  './submodules/meson_deps',
+  './submodules/meson_deps/submodules',
+  './submodules/meson_deps/meson',
   include_directories(
+    './submodules',
     './submodules/meson_deps',
     './submodules/meson_deps/submodules',
+    './submodules/meson_deps/submodules/c_ansi',
     './submodules/meson_deps/vendor',
     './submodules/meson_deps/vendor/sqlite',
   ),
@@ -46,6 +55,6 @@ subdir('mui-test')
 #//////////////////
 subdir('mui-meson-repos')
 #//////////////////
-subdir('mui-colors')
-subdir('mui-colors-test')
+#subdir('mui-colors')
+#subdir('mui-colors-test')
 #//////////////////
