@@ -25,6 +25,7 @@ inc = [
 
 
 
+subdir('meson_deps/meson/osx')
 subdir('meson_deps/submodules/c_ansi/ansi-codes')
 #subdir('meson_deps/submodules/c_ansi/ansi-utils')
 subdir('meson_deps/submodules/c_ansi/ansi-rgb-utils')

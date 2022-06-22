@@ -41,10 +41,6 @@ configure_file(
   copy: true,
 )
 #//////////////////
-subdir('submodules/meson_deps/meson/osx')
-#//////////////////
-add_project_link_arguments(osx_ldflags, language : ['objc', 'c'])
-#//////////////////
 subdir('submodules')
 #//////////////////
 subdir('mui')

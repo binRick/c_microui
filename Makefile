@@ -53,12 +53,6 @@ fix-dbg:
 install: all do-meson-install
 do-meson-install:
 	@cd build && meson install
-do-meson:
-	@$(MESON) build || { meson build --reconfigure || { meson build --wipe; } && meson build; }
-do-ninja:
-	@$(NINJA) -C build
-do-ninja-test:
-	@$(NINJA) test -C build -v
 do-nodemon:
 	@$(NODEMON) \
 		--delay .1 \
@@ -80,9 +74,7 @@ git-submodules-update:
 git-pull:
 	@$(GIT) pull --recurse-submodules
 do-uncrustify: uncrustify uncrustify-clean fix-dbg
-do-build: do-meson do-ninja do-test
-do-test: do-ninja-test
-test: do-test
+do-build: do-meson do-build do-test
 build: do-meson do-build
 ansi: all do-sync do-ansi-make
 tidy: \
@@ -92,7 +84,7 @@ dev: clean do-nodemon
 do-setup: do-clear python-venv
 do-clear:
 	@clear
-all: do-setup do-loc do-build 
+all: do-setup do-loc do-meson do-build do-test
 dev-nodemon: clean all
 nodemon: all
 meson-introspect-targets:
@@ -103,4 +95,13 @@ do-mui-meson-repos:
 	@./build/mui-meson-repos/mui-meson-repos
 do-mui-colors-test:
 	@./build/mui-colors-test/mui-colors-test
-
+do-meson:
+	@eval cd . && {  meson build || { meson build --reconfigure || { meson build --wipe; } && meson build; }; } 
+rm-make-logs:
+	@rm .make-log* 2>/dev/null||true
+test: do-test
+dev: nodemon
+do-build: do-meson                                                                                       
+	@meson compile -C build
+do-test:
+	@passh meson test -C build -v --print-errorlogs 
