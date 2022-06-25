@@ -23,13 +23,11 @@ inc = [
   include_directories('.'),
 ]  
 
-
-
-subdir('meson_deps/meson/osx')
+subdir('meson_deps/meson')
+subdir('meson_deps/meson/deps/hsluv-c')
 subdir('meson_deps/submodules/c_ansi/ansi-codes')
 subdir('meson_deps/submodules/c_ansi/ansi-utils')
 subdir('meson_deps/submodules/c_ansi/ansi-rgb-utils')
-subdir('meson_deps/meson')
 subdir('meson_deps/submodules/c_darwin/active-app')
 subdir('meson_deps/submodules/c_colors/db')
 subdir('meson_deps/submodules/c_colors/hex-png-pixel-utils')
