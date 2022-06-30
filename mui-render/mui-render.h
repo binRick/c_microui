@@ -1,7 +1,7 @@
 #pragma once
 //#include "../submodules/SDL_image/SDL_image.h"
-#include "mui-render-options.h"
 #include "../mui/mui.h"
+#include "mui-render-options.h"
 
 void r_init(void);
 void r_draw_rect(mu_Rect rect, mu_Color color);

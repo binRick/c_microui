@@ -1,20 +1,21 @@
-project('c_mui',['c'],default_options:['warning_level=0','c_std=gnu99'], version : '0.0.1',
-  subproject_dir: 'submodules/meson_deps/subprojects',
-  )
+project('c_mui',['c'],default_options:['warning_level=0','c_std=gnu99'], version : '0.0.1',subproject_dir: 'submodules/meson_deps/subprojects')
 cc = meson.get_compiler('c')
 pwd = meson.current_source_dir()
 meson_deps_dir = join_paths(meson.current_source_dir(),'submodules/meson_deps')
 #############################################################
-subdir('meson')
-#############################################################
 inc = [
-  '.',
+  include_directories('.'),
+  include_directories('./submodules/meson_deps/submodules/c_ansi'),
+  include_directories('./submodules/meson_deps/submodules/c_ansi/ansi-codes'),
+  include_directories('./submodules/meson_deps/submodules'),
+  include_directories(
+    './submodules/meson_deps/submodules/c_ansi/ansi-codes',
+    './submodules/meson_deps/submodules/c_ansi',
+  ),
   './submodules/meson_deps/submodules/c_darwin',
   './submodules/meson_deps/submodules/c_darwin/active-app',
   './submodules/meson_deps/submodules/djbhash',
   './submodules/meson_deps/submodules/djbhash/src',
-  './submodules/meson_deps/submodules/c_ansi',
-  './submodules/meson_deps/submodules/c_ansi/ansi-codes',
   include_directories('.','vendor','vendor/sqlite'),
   include_directories('./mui','./mui-render'),
   './mui-atlas',
@@ -36,6 +37,7 @@ inc = [
   ),
   include_directories('.'),
 ]
+subdir('meson')
 #//////////////////
 configure_file(
   input: 'assets/window_icon.bmp',  
