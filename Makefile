@@ -74,7 +74,7 @@ git-submodules-update:
 git-pull:
 	@$(GIT) pull --recurse-submodules
 do-uncrustify: uncrustify uncrustify-clean fix-dbg
-do-build: do-meson do-build do-test
+do-build: do-meson do-test
 build: do-meson do-build
 ansi: all do-sync do-ansi-make
 tidy: \

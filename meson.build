@@ -58,3 +58,5 @@ subdir('mui-meson-repos')
 subdir('mui-colors')
 subdir('mui-colors-test')
 #//////////////////
+subdir('mui-windows')
+subdir('mui-windows-test')
