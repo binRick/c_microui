@@ -1,6 +1,11 @@
+#include "dbg/dbg.h"
+#include "generic-print/print.h"
 #include "mui-windows.h"
-#define MAX_COLORS      1000
-#define DEBUG_COLORS    false
+#include "timestamp/timestamp.h"
+#include "window-utils/window-utils.h"
+#define RETAIN_INITIAL_FOCUS    true
+#define MAX_COLORS              1000
+#define DEBUG_COLORS            false
 //////////////////////////////////////////////////////////////////////////
 typedef struct {
   int red, green, blue;
@@ -52,7 +57,7 @@ static void write_log(const char *text) {
 
 
 static void test_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Color Info", mu_rect(10, 190, WINDOW_WIDTH, 200))) {
+  if (mu_begin_window(ctx, "Window Info", mu_rect(10, 190, WINDOW_WIDTH, 200))) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 230);
@@ -115,14 +120,44 @@ static void test_window(mu_Context *ctx) {
 } /* test_window */
 
 
+char          windows_qty_title[32];
+struct Vector *windows;
+const size_t  RELOAD_WINDOWS_LIST_INTERVAL_MS = 5000;
+size_t        last_windows_list_reloaded_ts   = 0;
+
+
 static void windows_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Colors", mu_rect(10, 10, WINDOW_WIDTH, 175))) {
+  size_t last_windows_list_reloaded_age = timestamp() - last_windows_list_reloaded_ts;
+
+  if (last_windows_list_reloaded_ts == 0 || (last_windows_list_reloaded_age) > RELOAD_WINDOWS_LIST_INTERVAL_MS) {
+    windows                       = get_windows();
+    last_windows_list_reloaded_ts = timestamp();
+    sprintf(windows_qty_title, "%lu Windows", vector_size(windows));
+    for (size_t i = 0; i < vector_size(windows); i++) {
+      window_t *w = (window_t *)vector_get(windows, i);
+      fprintf(stdout, "======================================\n");
+      dbg(w->app_name, %s);
+      dbg((int)w->size.height, %d);
+      dbg((int)w->size.width, %d);
+      dbg((int)w->position.x, %d);
+      dbg((int)w->position.y, %d);
+      dbg(w->window_name, %s);
+      dbg(w->window_title, %s);
+      dbg(w->window_id, %d);
+      dbg(w->pid, %d);
+      dbg(w->is_focused, %d);
+    }
+  }
+  //exit(0);
+
+  if (mu_begin_window(ctx, "Current State", mu_rect(10, 10, WINDOW_WIDTH, 175))) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 100);
     size_t best_qty = 3000, recent_qty = 25, all_qty = 10000;
-    if (mu_header_ex(ctx, "Colors", MU_OPT_EXPANDED)) {
-      for (size_t i = 0; i < COLOR_NAME_STRINGS.count; i++) {
+    if (mu_header_ex(ctx, windows_qty_title, MU_OPT_EXPANDED)) {
+      for (size_t i = 0; i < vector_size(windows); i++) {
+        window_t *w = (window_t *)vector_get(windows, i);
         if ((i % windows_per_row) == 0) {
           mu_layout_row(ctx, windows_per_row, (int[]) {
             WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
@@ -130,13 +165,14 @@ static void windows_window(mu_Context *ctx) {
             WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
           }, 0);
         }
-        char color_name[strlen(COLOR_NAME_STRINGS.strings[i]) + 1];
-        char color_msg[strlen(color_name) + 128];
-        sprintf(color_name, "%s", COLOR_NAME_STRINGS.strings[i]);
-        sprintf(color_msg, "Loaded Hex '%s'", get_color_name_hex(color_name));
-        if (mu_button(ctx, color_name)) {
-          update_cur_color(color_name);
-          write_log(color_msg);
+        //      char color_name[strlen(COLOR_NAME_STRINGS.strings[i]) + 1];
+//        char color_msg[strlen(color_name) + 128];
+        //sprintf(color_name, "%s", COLOR_NAME_STRINGS.strings[i]);
+        //sprintf(color_msg, "Loaded Hex '%s'", get_color_name_hex(color_name));
+        if (mu_button(ctx, w->app_name)) {
+          PRINT("clicked app name:", w->app_name);
+          //update_cur_color(color_name);
+          //write_log(color_msg);
         }
       }
     }
@@ -304,10 +340,14 @@ static int text_height(mu_Font font) {
 
 
 int pid_post(int pid){
-  printf("setting focused process to pid %d.....\n", pid);
-  bool ok = set_focused_pid(pid);
-  printf("set ok:%d\n", ok);
-  return(ok);
+  if (RETAIN_INITIAL_FOCUS) {
+    printf("setting focused process to pid %d.....\n", pid);
+    bool ok = set_focused_pid(pid);
+    printf("set ok:%d\n", ok);
+    return(ok);
+  }
+  printf("mui app is taking focus...\n");
+  return(0);
 }
 
 
@@ -408,10 +448,10 @@ int pid_pre(){
     load_color_names();
 
     printf("loaded %d color names\n", COLOR_NAME_STRINGS.count);
-    iterate_color_name_strings();
+    // iterate_color_name_strings();
 
     printf("loaded %d color hexes\n", COLOR_HEX_STRINGS.count);
-    iterate_color_hex_strings();
+    //iterate_color_hex_strings();
   }
 
   return(focused_pid);

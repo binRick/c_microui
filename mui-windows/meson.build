@@ -11,6 +11,7 @@ mui_windows_inc = [
  '../mui-render',
  '../submodules/meson_deps',
  '../submodules/meson_deps/submodules',
+ '../submodules/meson_deps/submodules/c_darwin/window-utils',
  '../submodules/meson_deps/submodules/c_darwin/active-app',
  '../submodules/meson_deps/submodules/c_darwin',
  '../submodules/meson_deps/submodules/c_ansi',
@@ -19,6 +20,10 @@ mui_windows_inc = [
  '../submodules/meson_deps/submodules/djbhash/src',
 ]
 mui_windows_deps = [
+   window_utils_dep,
+   app_utils_dep,
+   timestamp_dep,
+   generic_print_dep,
    djbhash_dep,
    sdl2_dep,
    mui_dep,

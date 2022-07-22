@@ -1,4 +1,5 @@
 inc = [
+  include_directories('meson_deps/submodules/c_ansi'),
   include_directories('meson_deps/submodules/c_fsio/include'),
   include_directories('meson_deps/submodules/c_string_buffer/include'),
   include_directories('meson_deps/submodules/c_string_buffer'),
@@ -26,9 +27,12 @@ inc = [
 subdir('meson_deps/meson')
 subdir('meson_deps/meson/deps/hsluv-c')
 subdir('meson_deps/submodules/c_ansi/ansi-codes')
+subdir('meson_deps/submodules/c_darwin/core-utils')
+subdir('meson_deps/submodules/c_darwin/active-app')
+subdir('meson_deps/submodules/c_darwin/window-utils')
+subdir('meson_deps/submodules/c_darwin/app-utils')
 subdir('meson_deps/submodules/c_ansi/ansi-utils')
 subdir('meson_deps/submodules/c_ansi/ansi-rgb-utils')
-subdir('meson_deps/submodules/c_darwin/active-app')
 subdir('meson_deps/submodules/c_colors/db')
 subdir('meson_deps/submodules/c_colors/hex-png-pixel-utils')
 subdir('meson_deps/submodules/c_colors/rgb-ansi-utils')

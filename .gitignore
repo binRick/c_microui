@@ -23,3 +23,4 @@ subprojects/libspng
 .DU
 .make-*log*
 loc.sh
+o
