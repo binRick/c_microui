@@ -41,7 +41,7 @@ uncrustify:
 uncrustify-clean:
 	@find  . -type f -maxdepth 2 -name "*unc-back*"|xargs -I % unlink %
 clean:
-	@rm -rf build .cache
+	@rm -rf build .cache||true
 clean-venv: 
 	@[[ -d $(VENV_DIR) && rm -rf $(VENV_DIR)
 	@true
@@ -77,9 +77,7 @@ do-uncrustify: uncrustify uncrustify-clean fix-dbg
 do-build: do-meson do-test
 build: do-meson do-build
 ansi: all do-sync do-ansi-make
-tidy: \
-	do-uncrustify \
-	do-build
+tidy: do-uncrustify
 dev: clean do-nodemon
 do-setup: do-clear python-venv
 do-clear:

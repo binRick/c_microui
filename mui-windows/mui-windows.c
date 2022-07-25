@@ -146,6 +146,8 @@ static void windows_window(mu_Context *ctx) {
       dbg(w->window_id, %d);
       dbg(w->pid, %d);
       dbg(w->is_focused, %d);
+      dbg(w->is_visible, %d);
+      dbg(w->layer, %d);
     }
   }
   //exit(0);
@@ -165,14 +167,8 @@ static void windows_window(mu_Context *ctx) {
             WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
           }, 0);
         }
-        //      char color_name[strlen(COLOR_NAME_STRINGS.strings[i]) + 1];
-//        char color_msg[strlen(color_name) + 128];
-        //sprintf(color_name, "%s", COLOR_NAME_STRINGS.strings[i]);
-        //sprintf(color_msg, "Loaded Hex '%s'", get_color_name_hex(color_name));
         if (mu_button(ctx, w->app_name)) {
           PRINT("clicked app name:", w->app_name);
-          //update_cur_color(color_name);
-          //write_log(color_msg);
         }
       }
     }
