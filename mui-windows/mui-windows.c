@@ -1,8 +1,12 @@
 #include "dbg/dbg.h"
 #include "generic-print/print.h"
 #include "mui-windows.h"
+#include "submodules/SDL_image/SDL_image.h"
 #include "timestamp/timestamp.h"
 #include "window-utils/window-utils.h"
+#include <SDL2/SDL_mutex.h>
+#include <SDL2/SDL_thread.h>
+
 #define RETAIN_INITIAL_FOCUS    true
 #define MAX_COLORS              1000
 #define DEBUG_COLORS            false
@@ -26,6 +30,7 @@ static void update_cur_color(const char *COLOR_NAME);
 static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME);
 static void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
 
+extern SDL_Renderer *renderer = NULL;
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -45,6 +50,16 @@ ColorsDB               *DB;
 struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_HASH = { 0 };
 struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
 //////////////////////////////////////////////////////////////////////////
+
+char          windows_qty_title[32];
+struct Vector *windows;
+const size_t  RELOAD_WINDOWS_LIST_INTERVAL_MS = 2000;
+size_t        last_windows_list_reloaded_ts   = 0;
+SDL_mutex     *windows_mutex;
+SDL_Thread    *poll_windows_thread;
+bool          poll_windows_thread_active = false;
+window_t      *cur_selected_window       = NULL;
+SDL_Texture   *texture;
 
 
 static void write_log(const char *text) {
@@ -66,50 +81,16 @@ static void test_window(mu_Context *ctx) {
       mu_Container *win = mu_get_current_container(ctx);
       char         buf[64];
       mu_layout_row(ctx, 4, (int[]) { 110, 160, 110, -1 }, 0);
+      SDL_LockMutex(windows_mutex);
 
-      mu_label(ctx, "Name:");
-      sprintf(buf, "%s", CUR_COLOR_NAME); mu_label(ctx, buf);
-
-      mu_label(ctx, "Hex:");
-      sprintf(buf, "%s", (char *)get_color_name_row_property(CUR_COLOR_NAME, "hex")); mu_label(ctx, buf);
-
-      mu_label(ctx, "Ansi Code:");
-      sprintf(buf, "%lu", (size_t)get_color_name_row_property(CUR_COLOR_NAME, "ansicode")); mu_label(ctx, buf);
-
-      mu_label(ctx, "RGB Total:");
-      sprintf(buf, "%lu",
-              (size_t)get_color_name_row_property(CUR_COLOR_NAME, "rgb.red")
-              + (size_t)get_color_name_row_property(CUR_COLOR_NAME, "rgb.green")
-              + (size_t)get_color_name_row_property(CUR_COLOR_NAME, "rgb.blue")
-              ); mu_label(ctx, buf);
-
-      mu_label(ctx, "RGB Background:");
-      sprintf(buf, "%d/%d/%d",
-              CUR_COLOR_RGB_BG.red,
-              CUR_COLOR_RGB_BG.green,
-              CUR_COLOR_RGB_BG.blue
-              ); mu_label(ctx, buf);
-    }
-
-    if (mu_header_ex(ctx, "RGB", MU_OPT_EXPANDED)) {
-      mu_layout_row(ctx, 2, (int[]) { -78, -1 }, 74);
-      mu_layout_begin_column(ctx);
-      mu_layout_row(ctx, 2, (int[]) { 46, -1 }, 0);
-      mu_label(ctx, "Red:");   mu_slider(ctx, &bg[0], 0, 255);
-      mu_label(ctx, "Green:"); mu_slider(ctx, &bg[1], 0, 255);
-      mu_label(ctx, "Blue:");  mu_slider(ctx, &bg[2], 0, 255);
-      mu_layout_end_column(ctx);
-      mu_Rect r = mu_layout_next(ctx);
-      mu_draw_rect(ctx, r, mu_color(
-                     bg[0],
-                     bg[1],
-                     bg[2],
-                     255
-                     )
-                   );
-      char buf[32];
-      sprintf(buf, "#%02X%02X%02X", (int)bg_text[0], (int)bg_text[1], (int)bg_text[2]);
-      mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
+      if (cur_selected_window != NULL) {
+        mu_label(ctx, "App Name:");
+        sprintf(buf, "%s", cur_selected_window->app_name); mu_label(ctx, buf);
+        mu_label(ctx, "Window ID:"); sprintf(buf, "%d", cur_selected_window->window_id); mu_label(ctx, buf);
+        mu_label(ctx, "Position:"); sprintf(buf, "%dx%d", (int)cur_selected_window->position.x, (int)cur_selected_window->position.y); mu_label(ctx, buf);
+        mu_label(ctx, "PID:"); sprintf(buf, "%d", cur_selected_window->pid); mu_label(ctx, buf);
+      }
+      SDL_UnlockMutex(windows_mutex);
     }
 
     /* tree */
@@ -120,46 +101,89 @@ static void test_window(mu_Context *ctx) {
 } /* test_window */
 
 
-char          windows_qty_title[32];
-struct Vector *windows;
-const size_t  RELOAD_WINDOWS_LIST_INTERVAL_MS = 5000;
-size_t        last_windows_list_reloaded_ts   = 0;
+static int poll_windows_thread_function(void *ARGS){
+  SDL_LockMutex(windows_mutex);
+  bool active = poll_windows_thread_active;
+  SDL_UnlockMutex(windows_mutex);
+  while (active) {
+    size_t        qty = 0;
+    window_t      *w;
+    unsigned long dur = 0;
+    SDL_LockMutex(windows_mutex);
+    {
+      unsigned long ts = timestamp();
+      active = poll_windows_thread_active;
+      if (active == false) {
+        break;
+      }
+      windows                       = get_windows();
+      last_windows_list_reloaded_ts = timestamp();
+      qty                           = vector_size(windows);
+      unsigned long dur = timestamp() - ts;
+    }
+    SDL_UnlockMutex(windows_mutex);
+    PRINT(">Reloaded ", qty, "Windows in", dur, "ms. Sleeping for ", RELOAD_WINDOWS_LIST_INTERVAL_MS, "ms");
+    for (size_t i = 0; i < qty; i++) {
+      SDL_LockMutex(windows_mutex);
+      {
+        w = (window_t *)vector_get(windows, i);
+      }
+      SDL_UnlockMutex(windows_mutex);
+      {
+        if (false) {
+          PRINT(
+            w->app_name, w->window_title,
+            w->pid, w->is_focused, w->is_visible, w->layer,
+            (int)w->size.height, (int)w->size.width, (int)w->position.x, (int)w->position.y
+            );
+        }
+      }
+    }
+    SDL_Delay(RELOAD_WINDOWS_LIST_INTERVAL_MS);
+  }
+  PRINT(">poll_windows_thread_function exited");
+  return(0);
+} /* poll_windows_thread_function */
 
 
 static void windows_window(mu_Context *ctx) {
-  size_t last_windows_list_reloaded_age = timestamp() - last_windows_list_reloaded_ts;
-
-  if (last_windows_list_reloaded_ts == 0 || (last_windows_list_reloaded_age) > RELOAD_WINDOWS_LIST_INTERVAL_MS) {
-    windows                       = get_windows();
-    last_windows_list_reloaded_ts = timestamp();
-    sprintf(windows_qty_title, "%lu Windows", vector_size(windows));
-    for (size_t i = 0; i < vector_size(windows); i++) {
-      window_t *w = (window_t *)vector_get(windows, i);
-      fprintf(stdout, "======================================\n");
-      dbg(w->app_name, %s);
-      dbg((int)w->size.height, %d);
-      dbg((int)w->size.width, %d);
-      dbg((int)w->position.x, %d);
-      dbg((int)w->position.y, %d);
-      dbg(w->window_name, %s);
-      dbg(w->window_title, %s);
-      dbg(w->window_id, %d);
-      dbg(w->pid, %d);
-      dbg(w->is_focused, %d);
-      dbg(w->is_visible, %d);
-      dbg(w->layer, %d);
-    }
-  }
-  //exit(0);
+//    SDL_Log("[windows_window]\n");
+/*
+ * size_t last_windows_list_reloaded_age = timestamp() - last_windows_list_reloaded_ts;
+ *
+ * if (last_windows_list_reloaded_ts == 0 || (last_windows_list_reloaded_age) > RELOAD_WINDOWS_LIST_INTERVAL_MS) {
+ * //  windows                       = get_windows();
+ * sprintf(windows_qty_title, "%lu Windows", vector_size(windows));
+ * for (size_t i = 0; i < vector_size(windows); i++) {
+ * SDL_LockMutex(windows_mutex);
+ * window_t *w = (window_t *)vector_get(windows, i);
+ * SDL_UnlockMutex(windows_mutex);
+ * fprintf(stdout, "======================================\n");
+ * }
+ * }
+ */
+//exit(0);
 
   if (mu_begin_window(ctx, "Current State", mu_rect(10, 10, WINDOW_WIDTH, 175))) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 100);
-    size_t best_qty = 3000, recent_qty = 25, all_qty = 10000;
+    size_t   best_qty = 3000, recent_qty = 25, all_qty = 10000;
+    window_t *w;
+    size_t   qty = 0;
+    SDL_LockMutex(windows_mutex);
+    {
+      qty = vector_size(windows);
+    }
+    SDL_UnlockMutex(windows_mutex);
+
     if (mu_header_ex(ctx, windows_qty_title, MU_OPT_EXPANDED)) {
-      for (size_t i = 0; i < vector_size(windows); i++) {
-        window_t *w = (window_t *)vector_get(windows, i);
+      for (size_t i = 0; i < qty; i++) {
+        SDL_LockMutex(windows_mutex);
+        {
+          w = (window_t *)vector_get(windows, i);
+        }
+        SDL_UnlockMutex(windows_mutex);
         if ((i % windows_per_row) == 0) {
           mu_layout_row(ctx, windows_per_row, (int[]) {
             WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
@@ -167,9 +191,18 @@ static void windows_window(mu_Context *ctx) {
             WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
           }, 0);
         }
-        if (mu_button(ctx, w->app_name)) {
+        char *button_name;
+        asprintf(&button_name, "%s-%d", w->app_name, w->window_id);
+        if (mu_button(ctx, button_name)) {
           PRINT("clicked app name:", w->app_name);
+          SDL_LockMutex(windows_mutex);
+          {
+            cur_selected_window = w;
+          }
+          PRINT("cur window id:", cur_selected_window->window_id);
+          SDL_UnlockMutex(windows_mutex);
         }
+        free(button_name);
       }
     }
     mu_end_window(ctx);
@@ -348,24 +381,43 @@ int pid_post(int pid){
 
 
 int mui_windows(){
-  int focused_pid = pid_pre();
+  windows_mutex = SDL_CreateMutex();
+  int threadReturnValue = -1;
+  int focused_pid       = pid_pre();
 
-  /* init SDL and renderer */
   SDL_Init(SDL_INIT_EVERYTHING);
   r_init();
+  int w, h;
 
-  /* init microui */
+
   mu_Context *ctx = malloc(sizeof(mu_Context));
 
   mu_init(ctx);
   ctx->text_width  = text_width;
   ctx->text_height = text_height;
 
+
+  SDL_LockMutex(windows_mutex);
+  {
+    windows                    = get_windows();
+    poll_windows_thread_active = true;
+  }
+  SDL_UnlockMutex(windows_mutex);
+  poll_windows_thread = SDL_CreateThread(poll_windows_thread_function, "PollWindows", (void *)NULL);
+  if (NULL == poll_windows_thread) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateThread failed: %s\n", SDL_GetError());
+  } else {
+    SDL_Log("Thread poll windows created\n");
+  }
+
   /* main loop */
-  for ( ;;) {
-    /* handle SDL events */
+  bool quit = false;
+  while (quit == false) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+      if (quit == true) {
+        break;
+      }
       switch (e.type) {
       case SDL_QUIT: exit(EXIT_SUCCESS); break;
       case SDL_MOUSEMOTION: mu_input_mousemove(ctx, e.motion.x, e.motion.y); break;
@@ -385,6 +437,12 @@ int mui_windows(){
       }
 
       case SDL_KEYDOWN:
+        fprintf(stderr, "keydown:%d..\n", e.key.keysym.sym);
+        if (e.key.keysym.sym == SDLK_q) {
+          fprintf(stderr, "quitting..\n");
+          quit = true;
+          break;
+        }
         if (e.key.keysym.sym == SDLK_s) {
           fprintf(stderr, "screenshot..\n");
           //screenshot(renderer, "screenshot.bmp");
@@ -422,7 +480,15 @@ int mui_windows(){
     }
     r_present();
   }
+  SDL_LockMutex(windows_mutex);
+  {
+    poll_windows_thread_active = false;
+  }
+  SDL_UnlockMutex(windows_mutex);
 
+  SDL_WaitThread(poll_windows_thread, &threadReturnValue);
+  SDL_Log("Thread returned value: %d\n", threadReturnValue);
+  SDL_DestroyMutex(windows_mutex);
   return(0);
 } /* main */
 

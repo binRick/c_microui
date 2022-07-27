@@ -52,7 +52,7 @@ static void write_log(const char *text) {
 
 
 static void test_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Color Info", mu_rect(10, 190, WINDOW_WIDTH, 200))) {
+  if (mu_begin_window_ex(ctx, "Color Info", mu_rect(10, 190, WINDOW_WIDTH, 200), MU_OPT_NODRAG)) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 230);
@@ -116,7 +116,7 @@ static void test_window(mu_Context *ctx) {
 
 
 static void colors_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Colors", mu_rect(10, 10, WINDOW_WIDTH, 175))) {
+  if (mu_begin_window_ex(ctx, "Colors", mu_rect(10, 10, WINDOW_WIDTH, 175), MU_OPT_NODRAG)) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, 240);
     win->rect.h = mu_max(win->rect.h, 100);
@@ -181,7 +181,7 @@ static void update_cur_color(const char *COLOR_NAME){
 
 
 static void log_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Log", mu_rect(10, 425, WINDOW_WIDTH, 150))) {
+  if (mu_begin_window_ex(ctx, "Log", mu_rect(10, 425, WINDOW_WIDTH, 150), MU_OPT_NODRAG)) {
     /* output text panel */
     mu_layout_row(ctx, 1, (int[]) { -1 }, -25);
     mu_begin_panel(ctx, "Log Output");
@@ -247,7 +247,7 @@ static void style_window(mu_Context *ctx) {
     { NULL }
   };
 
-  if (mu_begin_window(ctx, "Style Editor", mu_rect(320, 10, 300, 405))) {
+  if (mu_begin_window_ex(ctx, "Style Editor", mu_rect(320, 10, 300, 405), MU_OPT_NODRAG)) {
     int sw = mu_get_current_container(ctx)->body.w * 0.14;
     mu_layout_row(ctx, 6, (int[]) { 80, sw, sw, sw, sw, -1 }, 0);
     for (int i = 0; colors[i].label; i++) {

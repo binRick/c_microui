@@ -1,10 +1,15 @@
 #pragma once
-#include "../mui-atlas/mui-atlas.h"
-#include "../mui-render/mui-render.h"
+#include "mui-atlas/mui-atlas.h"
+#include "mui-render/mui-render.h"
 #include <assert.h>
 #include <stdbool.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL.h>
+
+
+typedef float    GLfloat;
+typedef Uint8    GLubyte;
+typedef Uint32   GLuint;
+
 
 #define IMG_PATH           "/tmp/a.png"
 #define CREATE_RENDERER    true
@@ -25,41 +30,20 @@
 #undef __SDL_WINDOW_ALWAYS_ON_TOP
 #define __SDL_WINDOW_ALWAYS_ON_TOP    | SDL_WINDOW_ALWAYS_ON_TOP
 #endif
-//#  | SDL_WINDOW_ALWAYS_ON_TOP
-//#  | SDL_WINDOW_BORDERLESS
-
-#define BUFFER_SIZE    16384
+#define BUFFER_SIZE                   16384
 
 static GLfloat tex_buf[BUFFER_SIZE * 8];
 static GLfloat      vert_buf[BUFFER_SIZE * 8];
 static GLubyte      color_buf[BUFFER_SIZE * 16];
 static GLuint       index_buf[BUFFER_SIZE * 6];
 
-static int          width  = WINDOW_WIDTH;
-static int          height = WINDOW_HEIGHT;
+static int          width  = 800;
+static int          height = 600;
 static int          buf_idx;
 
-static SDL_Window   *window;
-static SDL_Renderer *renderer;
-static SDL_Texture  *texture;
-static int          w, h;
-
-
-static void screenshot(SDL_Renderer *renderer, const char *filename) {
-  int width  = 0;
-  int height = 0;
-
-  SDL_GetRendererOutputSize(renderer, &width, &height);
-
-  SDL_Surface *screenshot = SDL_CreateRGBSurface(
-    0, width, height, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
-
-  SDL_RenderReadPixels(
-    renderer, NULL, SDL_PIXELFORMAT_ARGB8888, screenshot->pixels,
-    screenshot->pitch);
-  SDL_SaveBMP(screenshot, filename);
-  SDL_FreeSurface(screenshot);
-}
+static SDL_Window   *window   = NULL;
+static SDL_Renderer *renderer = NULL;
+static SDL_Texture  *texture  = NULL;
 
 
 void r_init(void) {
@@ -67,54 +51,49 @@ void r_init(void) {
     WINDOW_TITLE,
     WINDOW_X_OFFSET, WINDOW_Y_OFFSET,
     width, height,
-    SDL_WINDOW_OPTIONS
+    SDL_WINDOW_OPTIONS         \
     __SDL_WINDOW_ALWAYS_ON_TOP \
     __SDL_WINDOW_BORDERLESS    \
     __SDL_WINDOW_HIDDEN        \
     );
-//  SDL_RaiseWindow(window);
-// SDL_HideWindow(window);
-//  SDL_ShowWindow(window);
 
-  SDL_GL_CreateContext(window);
-  SDL_SetWindowIcon(window, SDL_LoadBMP("../window_icon.bmp"));
+  /* force a renderer for testing */
+  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+//  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+//  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
 
-
-  /* init gl */
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDisable(GL_CULL_FACE);
-  glDisable(GL_DEPTH_TEST);
-  glEnable(GL_SCISSOR_TEST);
-  glEnable(GL_TEXTURE_2D);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-
-  /* init texture */
-  GLuint id;
-  glGenTextures(1, &id);
-  glBindTexture(GL_TEXTURE_2D, id);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, ATLAS_WIDTH, ATLAS_HEIGHT, 0,
-               GL_ALPHA, GL_UNSIGNED_BYTE, atlas_texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  assert(glGetError() == 0);
-  if (CREATE_RENDERER) {
-    renderer = SDL_GetRenderer(window);
-    if (renderer == NULL) {
-      fprintf(stderr, "unable to create renderer: %s\n", SDL_GetError());
-    }else{
-      fprintf(stderr, "created renderer.................\n");
-      texture = IMG_LoadTexture(renderer, IMG_PATH);
-      if (!texture) {
-        SDL_Log("Couldn't load %s: %s\n", IMG_PATH, SDL_GetError());
-      }else{
-        SDL_QueryTexture(texture, NULL, NULL, &w, &h);
-        printf("w:%d|h:%d\n", w, h);
-      }
-    }
+  int flags = 0;
+  flags |= SDL_RENDERER_ACCELERATED;
+  // flags |= SDL_RENDERER_PRESENTVSYNC;
+  renderer = SDL_CreateRenderer(window, -1, flags);
+  if (renderer == NULL) {
+    SDL_Log("Error creating SDL renderer: %s", SDL_GetError());
+    return;
+  } else {
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(renderer, &info);
+    SDL_Log("Current SDL Renderer: %s", info.name);
   }
+
+  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STATIC, ATLAS_WIDTH, ATLAS_HEIGHT);
+  if (texture == NULL) {
+    SDL_Log("Error creating texture: %s", SDL_GetError());
+    return;
+  }
+  /* atlas_texture only contains GL_ALPHA channel, so create an intermediate ABGR8888 for SDL2 */
+  {
+    Uint8 *ptr = SDL_malloc(4 * ATLAS_WIDTH * ATLAS_HEIGHT);
+    for (int x = 0; x < ATLAS_WIDTH * ATLAS_HEIGHT; x++) {
+      ptr[4 * x]     = 255;
+      ptr[4 * x + 1] = 255;
+      ptr[4 * x + 2] = 255;
+      ptr[4 * x + 3] = atlas_texture[x];
+    }
+    SDL_UpdateTexture(texture, NULL, ptr, 4 * ATLAS_WIDTH);
+    SDL_free(ptr);
+  }
+  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 } /* r_init */
 
 
@@ -123,24 +102,21 @@ static void flush(void) {
     return;
   }
 
-  glViewport(0, 0, width, height);
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0.0f, width, height, 0.0f, -1.0f, +1.0f);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
+  int   xy_stride = 2 * sizeof(float);
+  float *xy       = vert_buf;
 
-  glTexCoordPointer(2, GL_FLOAT, 0, tex_buf);
-  glVertexPointer(2, GL_FLOAT, 0, vert_buf);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, color_buf);
-  glDrawElements(GL_TRIANGLES, buf_idx * 6, GL_UNSIGNED_INT, index_buf);
+  int   uv_stride = 2 * sizeof(float);
+  float *uv       = tex_buf;
 
-  glMatrixMode(GL_MODELVIEW);
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
+  int   col_stride = 4 * sizeof(Uint8);
+  int   *color     = (int *)color_buf;
+
+  SDL_RenderGeometryRaw(renderer, texture,
+                        xy, xy_stride, color,
+                        col_stride,
+                        uv, uv_stride,
+                        buf_idx * 4,
+                        index_buf, buf_idx * 6, sizeof(int));
 
   buf_idx = 0;
 }
@@ -249,18 +225,23 @@ int r_get_text_height(void) {
 
 void r_set_clip_rect(mu_Rect rect) {
   flush();
-  glScissor(rect.x, height - (rect.y + rect.h), rect.w, rect.h);
+  SDL_Rect r;
+  r.x = rect.x;
+  r.y = rect.y;
+  r.w = rect.w;
+  r.h = rect.h;
+  SDL_RenderSetClipRect(renderer, &r);
 }
 
 
 void r_clear(mu_Color clr) {
   flush();
-  glClearColor(clr.r / 255., clr.g / 255., clr.b / 255., clr.a / 255.);
-  glClear(GL_COLOR_BUFFER_BIT);
+  SDL_SetRenderDrawColor(renderer, clr.r, clr.g, clr.b, clr.a);
+  SDL_RenderClear(renderer);
 }
 
 
 void r_present(void) {
   flush();
-  SDL_GL_SwapWindow(window);
+  SDL_RenderPresent(renderer);
 }

@@ -30,6 +30,7 @@ mui_windows_deps = [
    mui_render_dep,
    active_app_dep,
    cargs_dep,
+   sdl2_image_dep,
    colors_csv_parser_dep,
    colors_json_parser_dep,
    c_stringfn_dep,
