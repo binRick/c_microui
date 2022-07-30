@@ -30,7 +30,7 @@ static void update_cur_color(const char *COLOR_NAME);
 static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME);
 static void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
 
-extern SDL_Renderer *renderer = NULL;
+extern SDL_Renderer *renderer;
 //////////////////////////////////////////////////////////////////////////
 
 

@@ -19,18 +19,18 @@ inc = [
   include_directories('meson_deps/submodules/c_colors'),
   include_directories('meson_deps/submodules/c_colors/parse-colors'),
   include_directories('meson_deps/submodules/c_colors/submodules'),
-  include_directories('meson_deps/submodules/c_colors/vendor'),
   include_directories('meson_deps/submodules'),
   include_directories('.'),
 ]  
 
 subdir('meson_deps/meson')
+subdir('meson_deps/meson/deps/iconv')
 subdir('meson_deps/meson/deps/hsluv-c')
 subdir('meson_deps/submodules/c_ansi/ansi-codes')
 subdir('meson_deps/submodules/c_ansi/ansi-utils')
 subdir('meson_deps/submodules/c_darwin/core-utils')
-subdir('meson_deps/submodules/c_darwin/kitty')
 subdir('meson_deps/submodules/c_darwin/process')
+subdir('meson_deps/submodules/c_darwin/kitty')
 subdir('meson_deps/submodules/c_darwin/pbpaste')
 subdir('meson_deps/submodules/c_darwin/pasteboard')
 subdir('meson_deps/submodules/c_darwin/system-utils')

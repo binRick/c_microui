@@ -21,6 +21,7 @@ if get_option('enable-binaries')
      dependencies: mui_test_deps,
      include_directories: mui_test_inc,
      install : true, 
+     #     link_args: [osx_ldflags],
      install_dir : '/usr/local/bin',
   )
   if get_option('enable-binary-tests')

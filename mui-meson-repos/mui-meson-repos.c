@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <SDL2/SDL.h>
+#ifdef WINDOW_WIDTH
+#undef WINDOW_WIDTH
+#endif
 #define WINDOW_WIDTH    650
 
 static char  logbuf[64000];

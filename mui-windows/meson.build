@@ -23,7 +23,7 @@ mui_windows_deps = [
    window_utils_dep,
    app_utils_dep,
    timestamp_dep,
-   generic_print_dep,
+   
    djbhash_dep,
    sdl2_dep,
    mui_dep,
