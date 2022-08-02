@@ -1,45 +1,45 @@
 inc = [
-  include_directories('meson_deps/submodules/c_ansi'),
-  include_directories('meson_deps/submodules/c_fsio/include'),
-  include_directories('meson_deps/submodules/c_string_buffer/include'),
-  include_directories('meson_deps/submodules/c_string_buffer'),
-  include_directories('meson_deps/submodules/c_stringfn'),
-  include_directories('meson_deps/submodules/c_stringfn/include'),
-  include_directories('meson_deps/submodules/slug.c/src'),
-  include_directories('meson_deps/submodules/dbg.h'),
-  include_directories('meson_deps/submodules/str-replace.c/src'),
-  include_directories('meson_deps/submodules/slug.c/deps'),
-  include_directories('meson_deps/submodules/progressbar'),
-  include_directories('meson_deps/submodules/progressbar/include'),
-  include_directories('meson_deps/submodules/progressbar/include/progressbar'),
-  include_directories('meson_deps/submodules/progressbar/lib'),
-  include_directories('meson_deps/submodules/list/src'),
-  include_directories('meson_deps/submodules/progress.c'),
-  include_directories('meson_deps/submodules/c_darwin'),
-  include_directories('meson_deps/submodules/c_colors'),
-  include_directories('meson_deps/submodules/c_colors/parse-colors'),
-  include_directories('meson_deps/submodules/c_colors/submodules'),
-  include_directories('meson_deps/submodules'),
+  include_directories('c_deps/submodules/c_ansi'),
+  include_directories('c_deps/submodules/c_fsio/include'),
+  include_directories('c_deps/submodules/c_string_buffer/include'),
+  include_directories('c_deps/submodules/c_string_buffer'),
+  include_directories('c_deps/submodules/c_stringfn'),
+  include_directories('c_deps/submodules/c_stringfn/include'),
+  include_directories('c_deps/submodules/slug.c/src'),
+  include_directories('c_deps/submodules/dbg.h'),
+  include_directories('c_deps/submodules/str-replace.c/src'),
+  include_directories('c_deps/submodules/slug.c/deps'),
+  include_directories('c_deps/submodules/progressbar'),
+  include_directories('c_deps/submodules/progressbar/include'),
+  include_directories('c_deps/submodules/progressbar/include/progressbar'),
+  include_directories('c_deps/submodules/progressbar/lib'),
+  include_directories('c_deps/submodules/list/src'),
+  include_directories('c_deps/submodules/progress.c'),
+  include_directories('c_deps/submodules/c_darwin'),
+  include_directories('c_deps/submodules/c_colors'),
+  include_directories('c_deps/submodules/c_colors/parse-colors'),
+  include_directories('c_deps/submodules/c_colors/submodules'),
+  include_directories('c_deps/submodules'),
   include_directories('.'),
 ]  
 
-subdir('meson_deps/meson')
-subdir('meson_deps/meson/deps/iconv')
-subdir('meson_deps/meson/deps/hsluv-c')
-subdir('meson_deps/submodules/c_ansi/ansi-codes')
-subdir('meson_deps/submodules/c_ansi/ansi-utils')
-subdir('meson_deps/submodules/c_darwin/core-utils')
-subdir('meson_deps/submodules/c_darwin/process')
-subdir('meson_deps/submodules/c_darwin/kitty')
-subdir('meson_deps/submodules/c_darwin/pbpaste')
-subdir('meson_deps/submodules/c_darwin/pasteboard')
-subdir('meson_deps/submodules/c_darwin/system-utils')
-subdir('meson_deps/submodules/c_darwin/active-app')
-subdir('meson_deps/submodules/c_darwin/window-utils')
-subdir('meson_deps/submodules/c_darwin/app-utils')
-subdir('meson_deps/submodules/c_ansi/ansi-rgb-utils')
-subdir('meson_deps/submodules/c_colors/db')
-subdir('meson_deps/submodules/c_colors/hex-png-pixel-utils')
-subdir('meson_deps/submodules/c_colors/rgb-ansi-utils')
-subdir('meson_deps/submodules/c_colors/colors-csv-parser')
-subdir('meson_deps/submodules/c_colors/colors-json-parser')
+subdir('c_deps/meson')
+subdir('c_deps/meson/deps/iconv')
+subdir('c_deps/meson/deps/hsluv-c')
+subdir('c_deps/submodules/c_ansi/ansi-codes')
+subdir('c_deps/submodules/c_ansi/ansi-utils')
+subdir('c_deps/submodules/c_darwin/core-utils')
+subdir('c_deps/submodules/c_darwin/process')
+subdir('c_deps/submodules/c_darwin/kitty')
+subdir('c_deps/submodules/c_darwin/pbpaste')
+subdir('c_deps/submodules/c_darwin/pasteboard')
+subdir('c_deps/submodules/c_darwin/system-utils')
+subdir('c_deps/submodules/c_darwin/active-app')
+subdir('c_deps/submodules/c_darwin/window-utils')
+subdir('c_deps/submodules/c_darwin/app-utils')
+subdir('c_deps/submodules/c_ansi/ansi-rgb-utils')
+subdir('c_deps/submodules/c_colors/db')
+subdir('c_deps/submodules/c_colors/hex-png-pixel-utils')
+subdir('c_deps/submodules/c_colors/rgb-ansi-utils')
+subdir('c_deps/submodules/c_colors/colors-csv-parser')
+subdir('c_deps/submodules/c_colors/colors-json-parser')

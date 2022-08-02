@@ -16,12 +16,12 @@
 #include "mui-render-options.h"
 #include "mui-render.h"
 #include "mui.h"
-#include "submodules/meson_deps/submodules/c_colors/db/db.h"
-#include "submodules/meson_deps/submodules/c_darwin/active-app/active-app.h"
-#include "submodules/meson_deps/submodules/c_string_buffer/include/stringbuffer.h"
-#include "submodules/meson_deps/submodules/c_stringfn/include/stringfn.h"
-#include "submodules/meson_deps/submodules/djbhash/src/djbhash.h"
-#include "submodules/meson_deps/submodules/parson/parson.h"
+#include "submodules/c_deps/submodules/c_colors/db/db.h"
+#include "submodules/c_deps/submodules/c_darwin/active-app/active-app.h"
+#include "submodules/c_deps/submodules/c_string_buffer/include/stringbuffer.h"
+#include "submodules/c_deps/submodules/c_stringfn/include/stringfn.h"
+#include "submodules/c_deps/submodules/djbhash/src/djbhash.h"
+#include "submodules/c_deps/submodules/parson/parson.h"
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 
