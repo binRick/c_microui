@@ -1,9 +1,9 @@
 inc = [
   include_directories('c_deps/submodules/c_ansi'),
-  include_directories('c_deps/submodules/c_fsio/include'),
-  include_directories('c_deps/submodules/c_string_buffer/include'),
   include_directories('c_deps/submodules/c_string_buffer'),
   include_directories('c_deps/submodules/c_stringfn'),
+  include_directories('c_deps/submodules/c_fsio/include'),
+  include_directories('c_deps/submodules/c_string_buffer/include'),
   include_directories('c_deps/submodules/c_stringfn/include'),
   include_directories('c_deps/submodules/slug.c/src'),
   include_directories('c_deps/submodules/dbg.h'),
@@ -25,7 +25,6 @@ inc = [
 
 subdir('c_deps/meson')
 subdir('c_deps/meson/deps/iconv')
-subdir('c_deps/meson/deps/hsluv-c')
 subdir('c_deps/submodules/c_ansi/ansi-codes')
 subdir('c_deps/submodules/c_ansi/ansi-utils')
 subdir('c_deps/submodules/c_darwin/core-utils')

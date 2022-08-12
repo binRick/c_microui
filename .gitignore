@@ -24,3 +24,4 @@ subprojects/libspng
 .make-*log*
 loc.sh
 o
+submodules/c_deps
