@@ -1,8 +1,8 @@
-#include "mui-windows.h"
+#include "mui-basic.h"
 #include <stdio.h>
 #include <string.h>
 
 int main(int argc, char **argv) {
-  mui_windows();
+  mui_basic();
   return(0);
 } /* main */

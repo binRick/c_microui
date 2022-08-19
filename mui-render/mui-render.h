@@ -1,11 +1,9 @@
 #pragma once
-#include <stdbool.h>
 #include "../mui/mui.h"
-#include "mui-render-options.h"
 struct mui_init_cfg_t {
-  int x_offset, y_offset;
-  int width, height;
-  int options;
+  int  x_offset, y_offset;
+  int  width, height;
+  int  options;
   char *title;
   bool retain_initial_focus;
 };
@@ -19,4 +17,3 @@ void r_set_clip_rect(mu_Rect rect);
 void r_clear(mu_Color color);
 void r_transparent();
 void r_present(void);
-

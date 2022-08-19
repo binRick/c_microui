@@ -1,7 +1,15 @@
 #pragma once
+#include "../mui-render/mui-render-options.h"
+#include "SDL2/SDL_image.h"
+#include <assert.h>
 #include <stdbool.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_hints.h>
+#include <SDL2/SDL_mutex.h>
+#include <SDL2/SDL_thread.h>
 #define MU_VERSION                "2.01"
 
 #define MU_COMMANDLIST_SIZE       (256 * 1024)
@@ -99,7 +107,6 @@ enum {
   MU_KEY_BACKSPACE = (1 << 3),
   MU_KEY_RETURN    = (1 << 4)
 };
-
 
 typedef struct mu_Context                                                                         mu_Context;
 typedef unsigned                                                                                  mu_Id;
@@ -207,7 +214,9 @@ struct mu_Context {
   char         input_text[32];
   SDL_Renderer *renderer;
 };
-
+#include "../mui-atlas/mui-atlas.h"
+#include "../mui-render/mui-render.h"
+#include "window-utils/window-utils.h"
 
 mu_Vec2 mu_vec2(int x, int y);
 mu_Rect mu_rect(int x, int y, int w, int h);
@@ -288,4 +297,3 @@ int mu_begin_popup(mu_Context *ctx, const char *name);
 void mu_end_popup(mu_Context *ctx);
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, int opt);
 void mu_end_panel(mu_Context *ctx);
-

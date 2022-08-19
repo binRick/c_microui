@@ -12,7 +12,6 @@ static char  logbuf[64000];
 static int   logbuf_updated = 0;
 static float bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 
-
 static void write_log(const char *text) {
   if (logbuf[0]) {
     strcat(logbuf, "\n");
@@ -20,7 +19,6 @@ static void write_log(const char *text) {
   strcat(logbuf, text);
   logbuf_updated = 1;
 }
-
 
 static void test_window(mu_Context *ctx) {
   /* do window */
@@ -72,11 +70,9 @@ static void test_window(mu_Context *ctx) {
 
     /* tree */
 
-
     mu_end_window(ctx);
   }
 } /* test_window */
-
 
 static void log_window(mu_Context *ctx) {
   if (mu_begin_window(ctx, "Log Window", mu_rect(10, 425, WINDOW_WIDTH, 150))) {
@@ -112,7 +108,6 @@ static void log_window(mu_Context *ctx) {
   }
 }
 
-
 static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high) {
   static float tmp;
 
@@ -124,7 +119,6 @@ static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high
   mu_pop_id(ctx);
   return(res);
 }
-
 
 static void style_window(mu_Context *ctx) {
   static struct { const char *label; int idx; } colors[] = {
@@ -160,14 +154,12 @@ static void style_window(mu_Context *ctx) {
   }
 }
 
-
 static void process_frame(mu_Context *ctx) {
   mu_begin(ctx);
   log_window(ctx);
   test_window(ctx);
   mu_end(ctx);
 }
-
 
 static const char button_map[256] = {
   [SDL_BUTTON_LEFT & 0xff]   = MU_MOUSE_LEFT,
@@ -186,7 +178,6 @@ static const char key_map[256] = {
   [SDLK_BACKSPACE & 0xff] = MU_KEY_BACKSPACE,
 };
 
-
 static int text_width(mu_Font font, const char *text, int len) {
   if (len == -1) {
     len = strlen(text);
@@ -194,16 +185,14 @@ static int text_width(mu_Font font, const char *text, int len) {
   return(r_get_text_width(text, len));
 }
 
-
 static int text_height(mu_Font font) {
   return(r_get_text_height());
 }
 
-
 int main(int argc, char **argv) {
   /* init SDL and renderer */
   SDL_Init(SDL_INIT_EVERYTHING);
-  r_init(0,0,0);
+  r_init(0, 0, 0);
 
   /* init microui */
   mu_Context *ctx = malloc(sizeof(mu_Context));
@@ -271,4 +260,3 @@ int main(int argc, char **argv) {
 
   return(0);
 } /* main */
-

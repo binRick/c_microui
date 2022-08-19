@@ -23,7 +23,6 @@ static void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW
 
 //////////////////////////////////////////////////////////////////////////
 
-
 //////////////////////////////////////////////////////////////////////////
 static char            CUR_COLOR_HEX[32], CUR_COLOR_ROW[2048], CUR_COLOR_NAME[32] = "";
 static color_rgb_t     CUR_COLOR_RGB    = { 0, 0, 0 };
@@ -41,7 +40,6 @@ struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_H
 struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
 //////////////////////////////////////////////////////////////////////////
 
-
 static void write_log(const char *text) {
   if (logbuf[0]) {
     strcat(logbuf, "\n");
@@ -49,7 +47,6 @@ static void write_log(const char *text) {
   strcat(logbuf, text);
   logbuf_updated = 1;
 }
-
 
 static void test_window(mu_Context *ctx) {
   if (mu_begin_window_ex(ctx, "Color Info", mu_rect(10, 190, WINDOW_WIDTH, 200), MU_OPT_NODRAG)) {
@@ -109,11 +106,9 @@ static void test_window(mu_Context *ctx) {
 
     /* tree */
 
-
     mu_end_window(ctx);
   }
 } /* test_window */
-
 
 static void colors_window(mu_Context *ctx) {
   if (mu_begin_window_ex(ctx, "Colors", mu_rect(10, 10, WINDOW_WIDTH, 175), MU_OPT_NODRAG)) {
@@ -144,7 +139,6 @@ static void colors_window(mu_Context *ctx) {
   }
 } /* colors_window */
 
-
 static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME){
   color_rgb_t bg_color = {
     255,
@@ -160,7 +154,6 @@ static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME){
   }
   return(bg_color);
 }
-
 
 static void update_cur_color(const char *COLOR_NAME){
   sprintf(CUR_COLOR_NAME, "%s", COLOR_NAME);
@@ -178,7 +171,6 @@ static void update_cur_color(const char *COLOR_NAME){
           CUR_COLOR_ROW
           );
 }
-
 
 static void log_window(mu_Context *ctx) {
   if (mu_begin_window_ex(ctx, "Log", mu_rect(10, 425, WINDOW_WIDTH, 150), MU_OPT_NODRAG)) {
@@ -214,7 +206,6 @@ static void log_window(mu_Context *ctx) {
   }
 }
 
-
 static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high) {
   static float tmp;
 
@@ -226,7 +217,6 @@ static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high
   mu_pop_id(ctx);
   return(res);
 }
-
 
 static void style_window(mu_Context *ctx) {
   static struct { const char *label; int idx; } colors[] = {
@@ -262,7 +252,6 @@ static void style_window(mu_Context *ctx) {
   }
 }
 
-
 static void process_frame(mu_Context *ctx) {
   mu_begin(ctx);
   colors_window(ctx);
@@ -270,7 +259,6 @@ static void process_frame(mu_Context *ctx) {
   test_window(ctx);
   mu_end(ctx);
 }
-
 
 static const char button_map[256] = {
   [SDL_BUTTON_LEFT & 0xff]   = MU_MOUSE_LEFT,
@@ -289,7 +277,6 @@ static const char key_map[256] = {
   [SDLK_BACKSPACE & 0xff] = MU_KEY_BACKSPACE,
 };
 
-
 static int text_width(mu_Font font, const char *text, int len) {
   if (len == -1) {
     len = strlen(text);
@@ -297,11 +284,9 @@ static int text_width(mu_Font font, const char *text, int len) {
   return(r_get_text_width(text, len));
 }
 
-
 static int text_height(mu_Font font) {
   return(r_get_text_height());
 }
-
 
 int pid_post(int pid){
   printf("setting focused process to pid %d.....\n", pid);
@@ -310,13 +295,12 @@ int pid_post(int pid){
   return(ok);
 }
 
-
 int mui_colors(){
   int focused_pid = pid_pre();
 
   /* init SDL and renderer */
   SDL_Init(SDL_INIT_EVERYTHING);
-  r_init(0,0,0);
+  r_init(0, 0, 0);
 
   /* init microui */
   mu_Context *ctx = malloc(sizeof(mu_Context));
@@ -390,7 +374,6 @@ int mui_colors(){
   return(0);
 } /* main */
 
-
 int pid_pre(){
   int focused_pid = get_focused_pid();
 
@@ -417,7 +400,6 @@ int pid_pre(){
   return(focused_pid);
 }
 
-
 color_rgb_t get_color_name_rgb(const char *COLOR_NAME){
   struct djbhash_node *HASH_ITEM;
   color_rgb_t         color_rgb  = { 0, 0, 0 };
@@ -440,7 +422,6 @@ color_rgb_t get_color_name_rgb(const char *COLOR_NAME){
   return(color_rgb);
 }
 
-
 char * get_color_hex_name(const char *COLOR_HEX){
   struct djbhash_node *HASH_ITEM;
 
@@ -451,7 +432,6 @@ char * get_color_hex_name(const char *COLOR_HEX){
   return((char *)((HASH_ITEM)->value));
 }
 
-
 char * get_color_name_hex(const char *COLOR_NAME){
   struct djbhash_node *HASH_ITEM;
 
@@ -461,7 +441,6 @@ char * get_color_name_hex(const char *COLOR_NAME){
   }
   return((char *)((HASH_ITEM)->value));
 }
-
 
 static void * get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY){
   void        *res = NULL;
@@ -484,7 +463,6 @@ static void * get_color_name_row_property(const char *COLOR_NAME, const char *RO
   return((void *)res);
 }
 
-
 static char * get_color_name_row(const char *COLOR_NAME){
   struct djbhash_node *HASH_ITEM;
 
@@ -494,7 +472,6 @@ static char * get_color_name_row(const char *COLOR_NAME){
   }
   return((char *)((HASH_ITEM)->value));
 }
-
 
 int load_color_names(){
   struct StringBuffer *NAME_STRINGS = stringbuffer_new();
@@ -532,7 +509,6 @@ int load_color_names(){
   return(qty);
 }
 
-
 void iterate_color_hex_strings(){
   for (size_t i = 0; i < COLOR_HEX_STRINGS.count; i++) {
     char *color_name = get_color_hex_name(COLOR_HEX_STRINGS.strings[i]);
@@ -547,7 +523,6 @@ void iterate_color_hex_strings(){
     }
   }
 }
-
 
 void iterate_color_name_strings(){
   for (size_t i = 0; i < COLOR_NAME_STRINGS.count; i++) {
@@ -564,13 +539,11 @@ void iterate_color_name_strings(){
   }
 }
 
-
 void iterate_colors_hash(){
   for (size_t i = 0; i < COLOR_HEX_STRINGS.count; i++) {
     fprintf(stderr, "\t  - " AC_RESETALL AC_CYAN AC_ITALIC "#%lu> %s" AC_RESETALL "\n", i, COLOR_HEX_STRINGS.strings[i]);
   }
 }
-
 
 int load_colors_hash(){
   struct djbhash_node *HASH_ITEM;

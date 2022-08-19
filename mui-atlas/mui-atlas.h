@@ -1,10 +1,13 @@
 #pragma once
 #include "../mui/mui.h"
-enum { ATLAS_WHITE = MU_ICON_MAX,
-       ATLAS_FONT };
-enum { ATLAS_WIDTH  = 128,
-       ATLAS_HEIGHT = 128 };
-
+enum { 
+  ATLAS_WHITE = MU_ICON_MAX,
+  ATLAS_FONT,
+};
+enum { 
+  ATLAS_WIDTH  = 128,
+  ATLAS_HEIGHT = 128,
+};
 
 static unsigned char atlas_texture[ATLAS_WIDTH * ATLAS_HEIGHT] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -891,8 +894,7 @@ static unsigned char atlas_texture[ATLAS_WIDTH * ATLAS_HEIGHT] = {
   0x00, 0x00, 0xba, 0xf7, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-
-static mu_Rect atlas[] = {
+static mu_Rect       atlas[] = {
   [MU_ICON_CLOSE]     = { 88, 68,  16, 16 },
   [MU_ICON_CHECK]     = { 0, 0,   18, 18 },
   [MU_ICON_EXPANDED]  = { 118, 68, 7,  5  },
@@ -995,4 +997,3 @@ static mu_Rect atlas[] = {
   [ATLAS_FONT + 126]  = { 102, 51, 6,  17 },
   [ATLAS_FONT + 127]  = { 108, 51, 6,  17 },
 };
-

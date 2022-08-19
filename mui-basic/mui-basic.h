@@ -21,7 +21,6 @@
 #include "c_deps/submodules/c_darwin/active-app/active-app.h"
 #include "c_deps/submodules/c_string_buffer/include/stringbuffer.h"
 #include "c_deps/submodules/c_stringfn/include/stringfn.h"
-#include "c_deps/submodules/djbhash/src/djbhash.h"
 #include "c_deps/submodules/parson/parson.h"
 #include "SDL2/SDL_image.h"
 #include "timestamp/timestamp.h"
@@ -29,7 +28,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <SDL2/SDL.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mutex.h>
 #include <SDL2/SDL_thread.h>
@@ -39,4 +37,4 @@
 
 #define WINDOW_WIDTH    650
 
-int mui_windows();
+int mui_basic();

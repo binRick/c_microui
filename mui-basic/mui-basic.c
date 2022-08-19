@@ -1,11 +1,15 @@
 #pragma once
-#include "../mui-windows/mui-windows.h"
+#include "../mui-basic/mui-basic.h"
 #include "../mui/mui.h"
-#define CFG_TITLE       "my app"
+#define          BUTTONS_PER_ROW  5
+#define          BUTTON_PADDING  5
+#define          BUTTON_SIZE 125
+#define          BUTTON_ICON 0
+#define          BUTTON_HEIGHT 25
+#define CFG_TITLE       "Basic App"
 #define CFG_X_OFFSET    50
 #define CFG_Y_OFFSET    50
-#define CFG_WIDTH       800
-#define CFG_HEIGHT      650
+#define CFG_WIDTH       (BUTTON_SIZE * BUTTONS_PER_ROW)
 #define CFG_OPTIONS         \
   SDL_WINDOW_ALLOW_HIGHDPI  \
   | SDL_WINDOW_OPENGL       \
@@ -13,45 +17,23 @@
   | SDL_WINDOW_BORDERLESS   \
   | SDL_WINDOW_SKIP_TASKBAR \
   | SDL_WINDOW_ALWAYS_ON_TOP
-//  |SDL_WINDOW_SHOWN
-//  |SDL_WINDOW_SKIP_TASKBAR\
-//  |SDL_WINDOW_POPUP_MENU
-#define LOG_HEIGHT               200
-#define CURRENT_STATE_HEIGHT     200
-#define WINDOW_INFO_HEIGHT       200
-#define WINDOW_INFO_OPTIONS      MU_OPT_NODRAG | MU_OPT_NOCLOSE
-#define CURRENT_STATE_OPTIONS    MU_OPT_NODRAG | MU_OPT_NOCLOSE
-#define LOG_OPTIONS              MU_OPT_NODRAG | MU_OPT_NOCLOSE
+#define BASIC_WINDOW_TITLE "Windows"
+#define BASIC_WINDOW_HEIGHT       300
+#define BASIC_WINDOW_OPTIONS      MU_OPT_NODRAG | MU_OPT_NOCLOSE
 static struct mui_init_cfg_t CFG = {
   .title    = CFG_TITLE,
   .options  = CFG_OPTIONS,
   .x_offset = CFG_X_OFFSET,.y_offset  = CFG_Y_OFFSET,
-  .width    = WINDOW_WIDTH, .height   = CURRENT_STATE_HEIGHT + CURRENT_STATE_HEIGHT + LOG_HEIGHT,
+  .width    = CFG_WIDTH, .height   = BASIC_WINDOW_HEIGHT,
 };
-
 #define RETAIN_INITIAL_FOCUS    true
-#define MAX_COLORS              1000
-#define DEBUG_COLORS            false
 //////////////////////////////////////////////////////////////////////////
 typedef struct {
   int red, green, blue;
 } color_rgb_t;
 //////////////////////////////////////////////////////////////////////////
-color_rgb_t get_color_name_rgb(const char *COLOR_NAME);
 int pid_pre();
 int pid_post(int);
-int load_windows_hash(ColorsDB *DB);
-void iterate_windows_hash();
-void iterate_color_name_strings();
-void iterate_color_hex_strings();
-int load_color_names();
-char * get_color_hex_name(const char *COLOR_HEX);
-char * get_color_name_hex(const char *COLOR_NAME);
-static char * get_color_name_row(const char *COLOR_NAME);
-static void update_cur_color(const char *COLOR_NAME);
-static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME);
-static void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
-extern SDL_Renderer *renderer;
 //////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////
@@ -64,11 +46,6 @@ static float           bg[3]           = { WINDOW_BACKGROUND_RED, WINDOW_BACKGRO
 static float           bg_text[3]      = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 static float           OUTER_BG[3]     = { 0, 0, 0 };
 volatile int           set_focus_qty   = 0;
-static size_t          windows_per_row = 3;
-//////////////////////////////////////////////////////////////////////////
-ColorsDB               *DB;
-struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_HASH = { 0 };
-struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
 //////////////////////////////////////////////////////////////////////////
 
 char          windows_qty_title[32];
@@ -88,34 +65,6 @@ static void write_log(const char *text) {
   strcat(logbuf, text);
   logbuf_updated = 1;
 }
-
-static void test_window(mu_Context *ctx) {
-  if (mu_begin_window_ex(ctx, "Window Info", mu_rect(0, CURRENT_STATE_HEIGHT, WINDOW_WIDTH, WINDOW_INFO_HEIGHT), WINDOW_INFO_OPTIONS)) {
-    mu_Container *win = mu_get_current_container(ctx);
-    win->rect.w = mu_max(win->rect.w, WINDOW_WIDTH);
-    win->rect.h = mu_max(win->rect.h, CURRENT_STATE_HEIGHT);
-
-    if (mu_header_ex(ctx, CUR_COLOR_NAME, MU_OPT_EXPANDED)) {
-      mu_Container *win = mu_get_current_container(ctx);
-      char         buf[64];
-      mu_layout_row(ctx, 4, (int[]) { 110, 160, 110, -1 }, 0);
-      SDL_LockMutex(windows_mutex);
-
-      if (cur_selected_window != NULL) {
-        mu_label(ctx, "App Name:");
-        sprintf(buf, "%s", cur_selected_window->app_name); mu_label(ctx, buf);
-        mu_label(ctx, "Window ID:"); sprintf(buf, "%d", cur_selected_window->window_id); mu_label(ctx, buf);
-        mu_label(ctx, "Position:"); sprintf(buf, "%dx%d", (int)cur_selected_window->position.x, (int)cur_selected_window->position.y); mu_label(ctx, buf);
-        mu_label(ctx, "PID:"); sprintf(buf, "%d", cur_selected_window->pid); mu_label(ctx, buf);
-      }
-      SDL_UnlockMutex(windows_mutex);
-    }
-
-    /* tree */
-
-    mu_end_window(ctx);
-  }
-} /* test_window */
 
 static int poll_windows_thread_function(void *ARGS){
   SDL_LockMutex(windows_mutex);
@@ -149,61 +98,38 @@ static int poll_windows_thread_function(void *ARGS){
   return(0);
 } /* poll_windows_thread_function */
 
-static void windows_window(mu_Context *ctx) {
-//    SDL_Log("[windows_window]\n");
-/*
- * size_t last_windows_list_reloaded_age = timestamp() - last_windows_list_reloaded_ts;
- *
- * if (last_windows_list_reloaded_ts == 0 || (last_windows_list_reloaded_age) > RELOAD_WINDOWS_LIST_INTERVAL_MS) {
- * //  windows                       = get_windows();
- * sprintf(windows_qty_title, "%lu Windows", vector_size(windows));
- * for (size_t i = 0; i < vector_size(windows); i++) {
- * SDL_LockMutex(windows_mutex);
- * window_t *w = (window_t *)vector_get(windows, i);
- * SDL_UnlockMutex(windows_mutex);
- * fprintf(stdout, "======================================\n");
- * }
- * }
- */
-//exit(0);
-
-  if (mu_begin_window_ex(ctx, "Current State", mu_rect(0, 0, WINDOW_WIDTH, CURRENT_STATE_HEIGHT), CURRENT_STATE_OPTIONS)) {
+static void basic_window(mu_Context *ctx) {
+  if (mu_begin_window_ex(ctx, "Basic", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
     mu_Container *win = mu_get_current_container(ctx);
-    win->rect.w = mu_max(win->rect.w, WINDOW_WIDTH);
-    win->rect.h = mu_max(win->rect.h, CURRENT_STATE_HEIGHT);
-    size_t   best_qty = 3000, recent_qty = 25, all_qty = 10000;
+    win->rect.w = mu_max(win->rect.w, CFG.width);
+    win->rect.h = mu_max(win->rect.h, CFG.height);
     window_t *w;
     size_t   qty = 0;
     SDL_LockMutex(windows_mutex);
-    {
-      qty = vector_size(windows);
-    }
+    qty = vector_size(windows);
     SDL_UnlockMutex(windows_mutex);
-
-    if (mu_header_ex(ctx, windows_qty_title, MU_OPT_EXPANDED | MU_OPT_NODRAG)) {
+    if (mu_header_ex(ctx, BASIC_WINDOW_TITLE, BASIC_WINDOW_OPTIONS|MU_OPT_EXPANDED|MU_OPT_AUTOSIZE)) {
       for (size_t i = 0; i < qty; i++) {
         SDL_LockMutex(windows_mutex);
-        {
-          w = (window_t *)vector_get(windows, i);
-        }
+        w = (window_t *)vector_get(windows, i);
         SDL_UnlockMutex(windows_mutex);
-        if ((i % windows_per_row) == 0) {
-          mu_layout_row(ctx, windows_per_row, (int[]) {
-            WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
-            WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
-            WINDOW_WIDTH / windows_per_row - windows_per_row - 3,
-          }, 0);
+        if ((i % BUTTONS_PER_ROW) == 0) {
+          mu_layout_row(ctx, BUTTONS_PER_ROW, (int[]) {
+            CFG.width / BUTTONS_PER_ROW - BUTTON_PADDING,
+            CFG.width / BUTTONS_PER_ROW - BUTTON_PADDING,
+            CFG.width / BUTTONS_PER_ROW - BUTTON_PADDING,
+            CFG.width / BUTTONS_PER_ROW - BUTTON_PADDING,
+            CFG.width / BUTTONS_PER_ROW - BUTTON_PADDING,
+          }, BUTTON_HEIGHT);
         }
         char *button_name;
         asprintf(&button_name, "%s-%d", w->app_name, w->window_id);
-        if (mu_button(ctx, button_name)) {
-          SDL_Log("clicked app name: %s", w->app_name);
+        if (mu_button_ex(ctx, button_name, BUTTON_ICON,MU_OPT_ALIGNCENTER)) {
+          SDL_Log("clicked app name: %s | window id: %d", w->app_name,w->window_id);
           SDL_LockMutex(windows_mutex);
-          {
-            cur_selected_window = w;
-          }
-          SDL_Log("cur window id: %d", cur_selected_window->window_id);
+          cur_selected_window = w;
           SDL_UnlockMutex(windows_mutex);
+          SDL_Log("cur window id: %d", cur_selected_window->window_id);
         }
         free(button_name);
       }
@@ -212,72 +138,6 @@ static void windows_window(mu_Context *ctx) {
   }
 } /* windows_window */
 
-static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME){
-  color_rgb_t bg_color = {
-    255,
-    255,
-    255,
-  };
-  color_rgb_t rgb = get_color_name_rgb(COLOR_NAME);
-
-  if (rgb.green > 160) {
-    bg_color.red   = 0;
-    bg_color.green = 0;
-    bg_color.blue  = 0;
-  }
-  return(bg_color);
-}
-
-static void update_cur_color(const char *COLOR_NAME){
-  sprintf(CUR_COLOR_NAME, "%s", COLOR_NAME);
-  sprintf(CUR_COLOR_HEX, "%s", get_color_name_hex(COLOR_NAME));
-  sprintf(CUR_COLOR_ROW, "%s", get_color_name_row(COLOR_NAME));
-  CUR_COLOR_RGB    = get_color_name_rgb(COLOR_NAME);
-  CUR_COLOR_RGB_BG = get_color_name_rgb_background(COLOR_NAME);
-  bg[0]            = CUR_COLOR_RGB.red;
-  bg[1]            = CUR_COLOR_RGB.green;
-  bg[2]            = CUR_COLOR_RGB.blue;
-  fprintf(stderr, "updated color to %s- |%s|%d/%d/%d|%s|\n",
-          CUR_COLOR_NAME,
-          CUR_COLOR_HEX,
-          CUR_COLOR_RGB.red, CUR_COLOR_RGB.green, CUR_COLOR_RGB.blue,
-          CUR_COLOR_ROW
-          );
-}
-
-static void log_window(mu_Context *ctx) {
-  if (mu_begin_window_ex(ctx, "Log", mu_rect(0, WINDOW_INFO_HEIGHT + CURRENT_STATE_HEIGHT, WINDOW_WIDTH, LOG_HEIGHT), LOG_OPTIONS)) {
-    /* output text panel */
-    mu_layout_row(ctx, 1, (int[]) { -1 }, -25);
-    mu_begin_panel(ctx, "Log Output");
-    mu_Container *panel = mu_get_current_container(ctx);
-    mu_layout_row(ctx, 1, (int[]) { -1 }, -1);
-    mu_text(ctx, logbuf);
-    mu_end_panel(ctx);
-    if (logbuf_updated) {
-      panel->scroll.y = panel->content_size.y;
-      logbuf_updated  = 0;
-    }
-
-    /* input textbox + submit button */
-    static char buf[128];
-    int         submitted = 0;
-    mu_layout_row(ctx, 2, (int[]) { -70, -1 }, 0);
-    if (mu_textbox(ctx, buf, sizeof(buf)) & MU_RES_SUBMIT) {
-      mu_set_focus(ctx, ctx->last_id);
-      submitted = 1;
-    }
-    if (mu_button(ctx, "Submit")) {
-      submitted = 1;
-    }
-    if (submitted) {
-      write_log(buf);
-      buf[0] = '\0';
-    }
-
-    mu_end_window(ctx);
-  }
-}
 
 static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high) {
   static float tmp;
@@ -313,9 +173,7 @@ static void style_window(mu_Context *ctx) {
 
 static void process_frame(mu_Context *ctx) {
   mu_begin(ctx);
-  windows_window(ctx);
-  log_window(ctx);
-  test_window(ctx);
+  basic_window(ctx);
   mu_end(ctx);
 }
 
@@ -349,24 +207,20 @@ int text_height(mu_Font font) {
 
 int pid_post(int pid){
   if (RETAIN_INITIAL_FOCUS) {
-    printf("setting focused process to pid %d.....\n", pid);
+    SDL_Log("setting focused process to pid %d", pid);
     bool ok = set_focused_pid(pid);
     printf("set ok:%d\n", ok);
     return(ok);
   }
-  printf("mui app is taking focus...\n");
   return(0);
 }
 
-int mui_windows(){
+int mui_basic(){
   windows_mutex = SDL_CreateMutex();
   int threadReturnValue = -1;
 //  int focused_pid       = pid_pre();
-
   SDL_Init(SDL_INIT_EVERYTHING);
   r_init(CFG);
-//  SDL_SetWindowIcon(
-  int        w, h;
 
   mu_Context *ctx = malloc(sizeof(mu_Context));
 
@@ -375,16 +229,14 @@ int mui_windows(){
   ctx->text_height = text_height;
 
   SDL_LockMutex(windows_mutex);
-  {
-    windows                    = get_windows();
-    poll_windows_thread_active = true;
-  }
+  windows                    = get_windows();
+  poll_windows_thread_active = true;
   SDL_UnlockMutex(windows_mutex);
   poll_windows_thread = SDL_CreateThread(poll_windows_thread_function, "PollWindows", (void *)NULL);
   if (NULL == poll_windows_thread) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateThread failed: %s\n", SDL_GetError());
   } else {
-    SDL_Log("Thread poll windows created\n");
+    SDL_Log("Thread poll windows created");
   }
 
   /* main loop */
@@ -440,31 +292,29 @@ int mui_windows(){
       }
       } /* switch */
     }
-    if (set_focus_qty < 1) {
-//      pid_post(focused_pid);
-      set_focus_qty++;
-    }
-
-    /* process frame */
     process_frame(ctx);
-
-    /* render */
     r_clear(mu_color(OUTER_BG[0], OUTER_BG[1], OUTER_BG[2], 255));
     mu_Command *cmd = NULL;
     while (mu_next_command(ctx, &cmd)) {
       switch (cmd->type) {
-      case MU_COMMAND_TEXT: r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color); break;
-      case MU_COMMAND_RECT: r_draw_rect(cmd->rect.rect, cmd->rect.color); break;
-      case MU_COMMAND_ICON: r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color); break;
-      case MU_COMMAND_CLIP: r_set_clip_rect(cmd->clip.rect); break;
+      case MU_COMMAND_TEXT: 
+        r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color); 
+        break;
+      case MU_COMMAND_RECT: 
+        r_draw_rect(cmd->rect.rect, cmd->rect.color); 
+        break;
+      case MU_COMMAND_ICON: 
+        r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color); 
+        break;
+      case MU_COMMAND_CLIP: 
+        r_set_clip_rect(cmd->clip.rect); 
+        break;
       }
     }
     r_present();
   }
   SDL_LockMutex(windows_mutex);
-  {
-    poll_windows_thread_active = false;
-  }
+  poll_windows_thread_active = false;
   SDL_UnlockMutex(windows_mutex);
 
   SDL_WaitThread(poll_windows_thread, &threadReturnValue);
@@ -475,45 +325,8 @@ int mui_windows(){
 
 int pid_pre(){
   int focused_pid = get_focused_pid();
-  SDL_Log(stderr, "found focused pid to be %d", focused_pid);
-
+  SDL_Log("found focused pid to be %d", focused_pid);
   return(focused_pid);
 }
 
-color_rgb_t get_color_name_rgb(const char *COLOR_NAME){
-  color_rgb_t         color_rgb  = { 0, 0, 0 };
-  return(color_rgb);
-}
 
-char * get_color_hex_name(const char *COLOR_HEX){
-  return(NULL);
-}
-
-char * get_color_name_hex(const char *COLOR_NAME){
-  return(NULL);
-}
-
-static void * get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY){
-  return(NULL);
-}
-
-static char * get_color_name_row(const char *COLOR_NAME){
-  return(NULL);
-}
-
-int load_color_names(){
-  return(0);
-}
-
-void iterate_color_hex_strings(){
-}
-
-void iterate_color_name_strings(){
-}
-
-void iterate_windows_hash(){
-}
-
-int load_windows_hash(){
-  return(0);
-} /* load_windows_hash */

@@ -1,13 +1,38 @@
-#include "mui-render.h"
+#pragma once
 #include "mui.h"
-#include <stdio.h>
-#include <string.h>
-#include <SDL2/SDL.h>
 
 static char  logbuf[64000];
 static int   logbuf_updated = 0;
 static float bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
-
+#define CFG_TITLE       "my app"
+#define CFG_X_OFFSET    50
+#define CFG_Y_OFFSET    50
+#define CFG_WIDTH       800
+#define CFG_HEIGHT      650
+#define CFG_OPTIONS         \
+  SDL_WINDOW_ALLOW_HIGHDPI  \
+  | SDL_WINDOW_OPENGL       \
+  | SDL_WINDOW_POPUP_MENU   \
+  | SDL_WINDOW_BORDERLESS   \
+  | SDL_WINDOW_SKIP_TASKBAR \
+  | SDL_WINDOW_ALWAYS_ON_TOP
+//  |SDL_WINDOW_SHOWN
+//  |SDL_WINDOW_SKIP_TASKBAR\
+//  |SDL_WINDOW_POPUP_MENU
+#define LOG_HEIGHT               200
+#define CURRENT_STATE_HEIGHT     200
+#define WINDOW_INFO_HEIGHT       200
+#define WINDOW_INFO_OPTIONS      MU_OPT_NODRAG | MU_OPT_NOCLOSE
+#define CURRENT_STATE_OPTIONS    MU_OPT_NODRAG | MU_OPT_NOCLOSE
+#define LOG_OPTIONS              MU_OPT_NODRAG | MU_OPT_NOCLOSE
+#include "mui-render/mui-render.h"
+#include "window-utils/window-utils.h"
+static struct mui_init_cfg_t CFG = {
+  .title    = CFG_TITLE,
+  .options  = CFG_OPTIONS,
+  .x_offset = CFG_X_OFFSET,.y_offset  = CFG_Y_OFFSET,
+  .width    = WINDOW_WIDTH, .height   = CURRENT_STATE_HEIGHT + CURRENT_STATE_HEIGHT + LOG_HEIGHT,
+};
 
 static void write_log(const char *text) {
   if (logbuf[0]) {
@@ -16,7 +41,6 @@ static void write_log(const char *text) {
   strcat(logbuf, text);
   logbuf_updated = 1;
 }
-
 
 static void test_window(mu_Context *ctx) {
   /* do window */
@@ -136,7 +160,6 @@ static void test_window(mu_Context *ctx) {
   }
 } /* test_window */
 
-
 static void log_window(mu_Context *ctx) {
   if (mu_begin_window_ex(ctx, "Log Window", mu_rect(10, 425, 612, 150), MU_OPT_NODRAG)) {
     /* output text panel */
@@ -171,7 +194,6 @@ static void log_window(mu_Context *ctx) {
   }
 }
 
-
 static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high) {
   static float tmp;
 
@@ -183,7 +205,6 @@ static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high
   mu_pop_id(ctx);
   return(res);
 }
-
 
 static void style_window(mu_Context *ctx) {
   static struct { const char *label; int idx; } colors[] = {
@@ -219,7 +240,6 @@ static void style_window(mu_Context *ctx) {
   }
 }
 
-
 static void process_frame(mu_Context *ctx) {
   mu_begin(ctx);
   style_window(ctx);
@@ -227,7 +247,6 @@ static void process_frame(mu_Context *ctx) {
   test_window(ctx);
   mu_end(ctx);
 }
-
 
 static const char button_map[256] = {
   [SDL_BUTTON_LEFT & 0xff]   = MU_MOUSE_LEFT,
@@ -246,7 +265,6 @@ static const char key_map[256] = {
   [SDLK_BACKSPACE & 0xff] = MU_KEY_BACKSPACE,
 };
 
-
 static int text_width(mu_Font font, const char *text, int len) {
   if (len == -1) {
     len = strlen(text);
@@ -254,15 +272,13 @@ static int text_width(mu_Font font, const char *text, int len) {
   return(r_get_text_width(text, len));
 }
 
-
 static int text_height(mu_Font font) {
   return(r_get_text_height());
 }
 
-
 int main(int argc, char **argv) {
   SDL_Init(SDL_INIT_EVERYTHING);
-  r_init(0,0,0);
+  r_init(CFG);
 
   /* init microui */
   mu_Context *ctx = malloc(sizeof(mu_Context));
@@ -330,4 +346,3 @@ int main(int argc, char **argv) {
 
   return(0);
 } /* main */
-

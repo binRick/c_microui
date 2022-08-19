@@ -5,7 +5,12 @@ c_deps_dir = join_paths(meson.current_source_dir(),'submodules/c_deps')
 #############################################################
 inc = [
   include_directories('./'),
+  './',
   include_directories('./mui-windows'),
+  include_directories('/usr/local/include'),
+  include_directories('/usr/local/Cellar/sdl2/2.0.22/include'),
+  '/usr/local/Cellar/sdl2/2.0.22/include',
+  '/usr/local/Cellar/sdl2_ttf/2.20.0/include','/usr/local/Cellar/sdl2_image/2.6.1/include',
   include_directories('./submodules/c_deps/submodules/c_ansi'),
   include_directories('./submodules/c_deps/submodules/c_ansi/ansi-codes'),
   include_directories('./submodules/c_deps/submodules'),
@@ -24,7 +29,9 @@ inc = [
   './submodules/c_deps/submodules/djbhash/src',
   include_directories('./mui','./mui-render'),
   './mui-atlas',
+  './mui-render',
   './mui',
+  './',
   './submodules',
   './submodules/c_deps/submodules/c_ansi',
   './submodules/c_deps/submodules/c_ansi/ansi-codes',
@@ -54,12 +61,14 @@ subdir('mui')
 subdir('mui-atlas')
 subdir('mui-render')
 #//////////////////
-#subdir('mui-test')
+subdir('mui-test')
 #//////////////////
 #subdir('mui-meson-repos')
 #//////////////////
 #subdir('mui-colors')
 #subdir('mui-colors-test')
+subdir('mui-basic')
+subdir('mui-basic-test')
 #//////////////////
 subdir('mui-windows')
 subdir('mui-windows-test')

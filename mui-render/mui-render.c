@@ -1,22 +1,16 @@
 #pragma once
-#include "mui-atlas/mui-atlas.h"
 #include "mui-render/mui-render.h"
-#include <assert.h>
-#include <stdbool.h>
-#include <SDL.h>
-
 
 typedef float    GLfloat;
 typedef Uint8    GLubyte;
 typedef Uint32   GLuint;
 
-
-#define SDL_WINDOW_OPTIONS SDL_WINDOW_ALLOW_HIGHDPI
-#define IMG_PATH           "/tmp/a.png"
-#define CREATE_RENDERER    true
+#define SDL_WINDOW_OPTIONS    SDL_WINDOW_ALLOW_HIGHDPI
+#define IMG_PATH              "/tmp/a.png"
+#define CREATE_RENDERER       true
 #define __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_ALWAYS_ON_TOP
-#define __SDL_WINDOW_BORDERLESS 
+#define __SDL_WINDOW_BORDERLESS
 #ifdef WINDOW_HIDDEN
 #undef __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_HIDDEN    | SDL_WINDOW_HIDDEN
@@ -24,12 +18,12 @@ typedef Uint32   GLuint;
 #ifdef WINDOW_BORDERLESS
 #undef __SDL_WINDOW_BORDERLESS
 #define __SDL_WINDOW_BORDERLESS    | SDL_WINDOW_BORDERLESS
-#define SDL_WINDOW_OPTIONS SDL_WINDOW_OPTIONS|SDL_WINDOW_BORDERLESS
+#define SDL_WINDOW_OPTIONS         SDL_WINDOW_OPTIONS | SDL_WINDOW_BORDERLESS
 #endif
 #ifdef WINDOW_ALWAYS_ON_TOP
 #undef __SDL_WINDOW_ALWAYS_ON_TOP
 #define __SDL_WINDOW_ALWAYS_ON_TOP    | SDL_WINDOW_ALWAYS_ON_TOP
-#define SDL_WINDOW_OPTIONS SDL_WINDOW_OPTIONS|SDL_WINDOW_ALWAYS_ON_TOP
+#define SDL_WINDOW_OPTIONS            SDL_WINDOW_OPTIONS | SDL_WINDOW_ALWAYS_ON_TOP
 #endif
 #define BUFFER_SIZE                   16384
 
@@ -38,37 +32,34 @@ static GLfloat      vert_buf[BUFFER_SIZE * 8];
 static GLubyte      color_buf[BUFFER_SIZE * 16];
 static GLuint       index_buf[BUFFER_SIZE * 6];
 
-static int          width  = 800;
-static int          height = 600;
 static int          buf_idx;
 
 static SDL_Window   *window   = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture  *texture  = NULL;
 
-
 void r_init(struct mui_init_cfg_t CFG){
-  SDL_Log("SDL_WINDOW_OPTIONS:%d\n",SDL_WINDOW_OPTIONS);
-  SDL_Log("OPTIONS:%d\n",CFG.options);
-  SDL_Log("Offset:%dx%d\n",CFG.x_offset,CFG.y_offset);
-  SDL_Log("size:%dx%d\n",CFG.width,CFG.height);
+  SDL_Log("SDL_WINDOW_OPTIONS:%d\n", SDL_WINDOW_OPTIONS);
+  SDL_Log("OPTIONS:%d\n", CFG.options);
+  SDL_Log("Offset:%dx%d\n", CFG.x_offset, CFG.y_offset);
+  SDL_Log("size:%dx%d\n", CFG.width, CFG.height);
   window = SDL_CreateWindow(
     CFG.title,
     CFG.x_offset, CFG.y_offset,
     CFG.width, CFG.height,
     CFG.options
     );
-  int window_id = SDL_GetWindowID(window);
+  int  window_id     = SDL_GetWindowID(window);
   char *window_title = SDL_GetWindowTitle(window);
-  SDL_SetWindowGrab(window,SDL_FALSE);
-  SDL_Log("Created Window ID #%d with title '%s'",window_id,window_title);
+  SDL_SetWindowGrab(window, SDL_FALSE);
+  SDL_Log("Created Window ID #%d with title '%s'", window_id, window_title);
 
   /* force a renderer for testing */
   SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
   int flags = 0;
-  flags |= SDL_RENDERER_ACCELERATED;
+  flags   |= SDL_RENDERER_ACCELERATED;
   renderer = SDL_CreateRenderer(window, -1, flags);
   if (renderer == NULL) {
     SDL_Log("Error creating SDL renderer: %s", SDL_GetError());
@@ -99,7 +90,6 @@ void r_init(struct mui_init_cfg_t CFG){
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 } /* r_init */
 
-
 static void flush(void) {
   if (buf_idx == 0) {
     return;
@@ -123,7 +113,6 @@ static void flush(void) {
 
   buf_idx = 0;
 }
-
 
 static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
   if (buf_idx == BUFFER_SIZE) {
@@ -175,11 +164,9 @@ static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
   index_buf[index_idx + 5] = element_idx + 1;
 } /* push_quad */
 
-
 void r_draw_rect(mu_Rect rect, mu_Color color) {
   push_quad(rect, atlas[ATLAS_WHITE], color);
 }
-
 
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
   mu_Rect dst = { pos.x, pos.y, 0, 0 };
@@ -197,7 +184,6 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
   }
 }
 
-
 void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
   mu_Rect src = atlas[id];
   int     x   = rect.x + (rect.w - src.w) / 2;
@@ -205,7 +191,6 @@ void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
 
   push_quad(mu_rect(x, y, src.w, src.h), src, color);
 }
-
 
 int r_get_text_width(const char *text, int len) {
   int res = 0;
@@ -220,11 +205,9 @@ int r_get_text_width(const char *text, int len) {
   return(res);
 }
 
-
 int r_get_text_height(void) {
   return(18);
 }
-
 
 void r_set_clip_rect(mu_Rect rect) {
   flush();
@@ -242,13 +225,11 @@ void r_transparent(){
   SDL_RenderClear(renderer);
 }
 
-
 void r_clear(mu_Color clr) {
   flush();
   SDL_SetRenderDrawColor(renderer, clr.r, clr.g, clr.b, clr.a);
   SDL_RenderClear(renderer);
 }
-
 
 void r_present(void) {
   flush();

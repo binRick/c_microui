@@ -1,11 +1,11 @@
-mui_windows_timeout_seconds = '.8'
-mui_windows_srcs = [
-  'mui-windows.c',
+mui_basic_timeout_seconds = '.8'
+mui_basic_srcs = [
+  'mui-basic.c',
 ]
-mui_windows_inc = [
+mui_basic_inc = [
  inc,
  '.',
- '../mui-windows',
+ '../mui-basic',
  '../mui-atlas',
  '../mui',
  '../mui-render',
@@ -19,7 +19,7 @@ mui_windows_inc = [
  '../submodules/c_deps/submodules/djbhash',
  '../submodules/c_deps/submodules/djbhash/src',
 ]
-mui_windows_deps = [
+mui_basic_deps = [
    window_utils_dep,
    app_utils_dep,
    timestamp_dep,
@@ -47,20 +47,18 @@ mui_windows_deps = [
    db_dep,
    ansi_utils_deps, 
 ]
-mui_windows_c_args = [
- '-DWINDOW_X_OFFSET="25"',
- '-DWINDOW_Y_OFFSET="25"',
+mui_basic_c_args = [
 ]
 
-mui_windows_lib = static_library('mui-windows',
-  mui_windows_srcs,
+mui_basic_lib = static_library('mui-basic',
+  mui_basic_srcs,
   install: false,
-  dependencies: mui_windows_deps,
-  c_args: mui_windows_c_args,
-  include_directories: mui_windows_inc,
+  dependencies: mui_basic_deps,
+  c_args: mui_basic_c_args,
+  include_directories: mui_basic_inc,
 )
 
-mui_windows_dep = declare_dependency(
-  include_directories: mui_windows_inc,
-  link_with: mui_windows_lib,
+mui_basic_dep = declare_dependency(
+  include_directories: mui_basic_inc,
+  link_with: mui_basic_lib,
 )

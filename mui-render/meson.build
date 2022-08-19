@@ -10,6 +10,8 @@ mui_render_inc = [
 ]
 mui_render_deps = [
   sdl2_dep,
+  sdl2_ttf_dep,
+  sdl2_image_dep,
   mui_atlas_dep,
   mui_dep,
 ]
