@@ -203,7 +203,7 @@ static int text_height(mu_Font font) {
 int main(int argc, char **argv) {
   /* init SDL and renderer */
   SDL_Init(SDL_INIT_EVERYTHING);
-  r_init();
+  r_init(0,0,0);
 
   /* init microui */
   mu_Context *ctx = malloc(sizeof(mu_Context));

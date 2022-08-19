@@ -1,6 +1,4 @@
-//#define WINDOW_HIDDEN
-
-
+#pragma once
 #ifdef WINDOW_HIDDEN
 #define __WINDOW_HIDDEN
 #endif
@@ -9,9 +7,15 @@
 #endif
 #ifndef WINDOW_X_OFFSET
 #define WINDOW_X_OFFSET            670
+#else
+#undef WINDOW_X_OFFSET
+#define WINDOW_X_OFFSET            WINDOW_X_OFFSET
 #endif
 #ifndef WINDOW_Y_OFFSET
 #define WINDOW_Y_OFFSET            100
+#else
+#undef WINDOW_Y_OFFSET
+#define WINDOW_Y_OFFSET            WINDOW_Y_OFFSET
 #endif
 #ifndef WINDOW_WIDTH
 #define WINDOW_WIDTH               800

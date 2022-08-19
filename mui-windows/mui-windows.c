@@ -1,11 +1,39 @@
-#include "dbg/dbg.h"
-#include "generic-print/print.h"
-#include "mui-windows.h"
-#include "submodules/SDL_image/SDL_image.h"
-#include "timestamp/timestamp.h"
-#include "window-utils/window-utils.h"
+#pragma once
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_mutex.h>
+#include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_thread.h>
+#include "SDL2/SDL_image.h"
+#define CFG_TITLE "my app"
+#define CFG_X_OFFSET 50
+#define CFG_Y_OFFSET 50
+#define CFG_WIDTH 800
+#define CFG_HEIGHT 650
+#define CFG_OPTIONS \
+  SDL_WINDOW_ALLOW_HIGHDPI\
+  |SDL_WINDOW_OPENGL\
+  |SDL_WINDOW_POPUP_MENU\
+  |SDL_WINDOW_BORDERLESS \
+  |SDL_WINDOW_SKIP_TASKBAR \
+  |SDL_WINDOW_ALWAYS_ON_TOP
+//  |SDL_WINDOW_SHOWN
+//  |SDL_WINDOW_SKIP_TASKBAR\
+//  |SDL_WINDOW_POPUP_MENU
+#define LOG_HEIGHT 200
+#define CURRENT_STATE_HEIGHT 200
+#define WINDOW_INFO_HEIGHT 200
+#define WINDOW_INFO_OPTIONS MU_OPT_NODRAG|MU_OPT_NOCLOSE
+#define CURRENT_STATE_OPTIONS MU_OPT_NODRAG|MU_OPT_NOCLOSE
+#define LOG_OPTIONS MU_OPT_NODRAG|MU_OPT_NOCLOSE
+#include "window-utils/window-utils.h"
+#include "mui-render/mui-render.h"
+#include "mui-windows.h"
+static struct mui_init_cfg_t CFG = {
+    .title = CFG_TITLE,
+    .options = CFG_OPTIONS,
+    .x_offset = CFG_X_OFFSET, .y_offset = CFG_Y_OFFSET,
+    .width = WINDOW_WIDTH, .height = CURRENT_STATE_HEIGHT+CURRENT_STATE_HEIGHT+LOG_HEIGHT,
+};
 
 #define RETAIN_INITIAL_FOCUS    true
 #define MAX_COLORS              1000
@@ -29,7 +57,6 @@ static char * get_color_name_row(const char *COLOR_NAME);
 static void update_cur_color(const char *COLOR_NAME);
 static color_rgb_t get_color_name_rgb_background(const char *COLOR_NAME);
 static void *get_color_name_row_property(const char *COLOR_NAME, const char *ROW_PROPERTY);
-
 extern SDL_Renderer *renderer;
 //////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +69,7 @@ static char            logbuf[64000];
 static int             logbuf_updated  = 0;
 static float           bg[3]           = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
 static float           bg_text[3]      = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
-static float           OUTER_BG[3]     = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+static float           OUTER_BG[3]     = { 0, 0, 0 };
 volatile int           set_focus_qty   = 0;
 static size_t          windows_per_row = 3;
 //////////////////////////////////////////////////////////////////////////
@@ -72,10 +99,10 @@ static void write_log(const char *text) {
 
 
 static void test_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Window Info", mu_rect(10, 190, WINDOW_WIDTH, 200))) {
+  if (mu_begin_window_ex(ctx, "Window Info", mu_rect(0, CURRENT_STATE_HEIGHT, WINDOW_WIDTH, WINDOW_INFO_HEIGHT),WINDOW_INFO_OPTIONS)){
     mu_Container *win = mu_get_current_container(ctx);
-    win->rect.w = mu_max(win->rect.w, 240);
-    win->rect.h = mu_max(win->rect.h, 230);
+    win->rect.w = mu_max(win->rect.w, WINDOW_WIDTH);
+    win->rect.h = mu_max(win->rect.h, CURRENT_STATE_HEIGHT);
 
     if (mu_header_ex(ctx, CUR_COLOR_NAME, MU_OPT_EXPANDED)) {
       mu_Container *win = mu_get_current_container(ctx);
@@ -122,26 +149,17 @@ static int poll_windows_thread_function(void *ARGS){
       unsigned long dur = timestamp() - ts;
     }
     SDL_UnlockMutex(windows_mutex);
-    PRINT(">Reloaded ", qty, "Windows in", dur, "ms. Sleeping for ", RELOAD_WINDOWS_LIST_INTERVAL_MS, "ms");
+    SDL_Log(">Reloaded ", qty, "Windows in", dur, "ms. Sleeping for ", RELOAD_WINDOWS_LIST_INTERVAL_MS, "ms");
     for (size_t i = 0; i < qty; i++) {
       SDL_LockMutex(windows_mutex);
       {
         w = (window_t *)vector_get(windows, i);
       }
       SDL_UnlockMutex(windows_mutex);
-      {
-        if (false) {
-          PRINT(
-            w->app_name, w->window_title,
-            w->pid, w->is_focused, w->is_visible, w->layer,
-            (int)w->size.height, (int)w->size.width, (int)w->position.x, (int)w->position.y
-            );
-        }
-      }
     }
     SDL_Delay(RELOAD_WINDOWS_LIST_INTERVAL_MS);
   }
-  PRINT(">poll_windows_thread_function exited");
+  SDL_Log(">poll_windows_thread_function exited");
   return(0);
 } /* poll_windows_thread_function */
 
@@ -164,10 +182,10 @@ static void windows_window(mu_Context *ctx) {
  */
 //exit(0);
 
-  if (mu_begin_window(ctx, "Current State", mu_rect(10, 10, WINDOW_WIDTH, 175))) {
+  if (mu_begin_window_ex(ctx, "Current State", mu_rect(0, 0, WINDOW_WIDTH, CURRENT_STATE_HEIGHT),CURRENT_STATE_OPTIONS)) {
     mu_Container *win = mu_get_current_container(ctx);
-    win->rect.w = mu_max(win->rect.w, 240);
-    win->rect.h = mu_max(win->rect.h, 100);
+    win->rect.w = mu_max(win->rect.w, WINDOW_WIDTH);
+    win->rect.h = mu_max(win->rect.h, CURRENT_STATE_HEIGHT);
     size_t   best_qty = 3000, recent_qty = 25, all_qty = 10000;
     window_t *w;
     size_t   qty = 0;
@@ -177,7 +195,7 @@ static void windows_window(mu_Context *ctx) {
     }
     SDL_UnlockMutex(windows_mutex);
 
-    if (mu_header_ex(ctx, windows_qty_title, MU_OPT_EXPANDED)) {
+    if (mu_header_ex(ctx, windows_qty_title, MU_OPT_EXPANDED|MU_OPT_NODRAG)) {
       for (size_t i = 0; i < qty; i++) {
         SDL_LockMutex(windows_mutex);
         {
@@ -194,12 +212,12 @@ static void windows_window(mu_Context *ctx) {
         char *button_name;
         asprintf(&button_name, "%s-%d", w->app_name, w->window_id);
         if (mu_button(ctx, button_name)) {
-          PRINT("clicked app name:", w->app_name);
+          SDL_Log("clicked app name: %s", w->app_name);
           SDL_LockMutex(windows_mutex);
           {
             cur_selected_window = w;
           }
-          PRINT("cur window id:", cur_selected_window->window_id);
+          SDL_Log("cur window id: %d", cur_selected_window->window_id);
           SDL_UnlockMutex(windows_mutex);
         }
         free(button_name);
@@ -246,7 +264,7 @@ static void update_cur_color(const char *COLOR_NAME){
 
 
 static void log_window(mu_Context *ctx) {
-  if (mu_begin_window(ctx, "Log", mu_rect(10, 425, WINDOW_WIDTH, 150))) {
+  if (mu_begin_window_ex(ctx, "Log", mu_rect(0, WINDOW_INFO_HEIGHT+CURRENT_STATE_HEIGHT, WINDOW_WIDTH, LOG_HEIGHT),LOG_OPTIONS)) {
     /* output text panel */
     mu_layout_row(ctx, 1, (int[]) { -1 }, -25);
     mu_begin_panel(ctx, "Log Output");
@@ -312,19 +330,6 @@ static void style_window(mu_Context *ctx) {
     { NULL }
   };
 
-  if (mu_begin_window(ctx, "Style Editor", mu_rect(320, 10, 300, 405))) {
-    int sw = mu_get_current_container(ctx)->body.w * 0.14;
-    mu_layout_row(ctx, 6, (int[]) { 80, sw, sw, sw, sw, -1 }, 0);
-    for (int i = 0; windows[i].label; i++) {
-      mu_label(ctx, windows[i].label);
-      uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
-      mu_draw_rect(ctx, mu_layout_next(ctx), ctx->style->colors[i]);
-    }
-    mu_end_window(ctx);
-  }
 }
 
 
@@ -386,9 +391,9 @@ int mui_windows(){
   int focused_pid       = pid_pre();
 
   SDL_Init(SDL_INIT_EVERYTHING);
-  r_init();
+  r_init(CFG);
+//  SDL_SetWindowIcon(
   int w, h;
-
 
   mu_Context *ctx = malloc(sizeof(mu_Context));
 
@@ -418,8 +423,12 @@ int mui_windows(){
       if (quit == true) {
         break;
       }
+ //     SDL_Log("event: %d",e.type);
       switch (e.type) {
       case SDL_QUIT: exit(EXIT_SUCCESS); break;
+      case SDL_WINDOWEVENT_SHOWN: SDL_Log("SDL_WINDOWEVENT_SHOWN"); break;
+      case SDL_WINDOWEVENT_LEAVE: SDL_Log("SDL_WINDOWEVENT_LEAVE"); break;
+      case SDL_WINDOWEVENT_ENTER: SDL_Log("SDL_WINDOWEVENT_ENTER"); break;
       case SDL_MOUSEMOTION: mu_input_mousemove(ctx, e.motion.x, e.motion.y); break;
       case SDL_MOUSEWHEEL: mu_input_scroll(ctx, 0, e.wheel.y * -30); break;
       case SDL_TEXTINPUT: mu_input_text(ctx, e.text.text); break;
@@ -503,18 +512,6 @@ int pid_pre(){
   sprintf(Path, "%s", COLOR_NAMES_DB_PATH);
   DB->Path = strdup(Path);
   free(Path);
-
-  if (init_colors_db(DB) == 0) {
-    int windows_qty = load_windows_hash(DB);
-    printf("loaded %d windows to hash\n", windows_qty);
-    load_color_names();
-
-    printf("loaded %d color names\n", COLOR_NAME_STRINGS.count);
-    // iterate_color_name_strings();
-
-    printf("loaded %d color hexes\n", COLOR_HEX_STRINGS.count);
-    //iterate_color_hex_strings();
-  }
 
   return(focused_pid);
 }

@@ -11,13 +11,12 @@ typedef Uint8    GLubyte;
 typedef Uint32   GLuint;
 
 
+#define SDL_WINDOW_OPTIONS SDL_WINDOW_ALLOW_HIGHDPI
 #define IMG_PATH           "/tmp/a.png"
 #define CREATE_RENDERER    true
-#define SDL_WINDOW_OPTIONS \
-  SDL_WINDOW_ALLOW_HIGHDPI
 #define __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_ALWAYS_ON_TOP
-#define __SDL_WINDOW_BORDERLESS
+#define __SDL_WINDOW_BORDERLESS 
 #ifdef WINDOW_HIDDEN
 #undef __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_HIDDEN    | SDL_WINDOW_HIDDEN
@@ -25,10 +24,12 @@ typedef Uint32   GLuint;
 #ifdef WINDOW_BORDERLESS
 #undef __SDL_WINDOW_BORDERLESS
 #define __SDL_WINDOW_BORDERLESS    | SDL_WINDOW_BORDERLESS
+#define SDL_WINDOW_OPTIONS SDL_WINDOW_OPTIONS|SDL_WINDOW_BORDERLESS
 #endif
 #ifdef WINDOW_ALWAYS_ON_TOP
 #undef __SDL_WINDOW_ALWAYS_ON_TOP
 #define __SDL_WINDOW_ALWAYS_ON_TOP    | SDL_WINDOW_ALWAYS_ON_TOP
+#define SDL_WINDOW_OPTIONS SDL_WINDOW_OPTIONS|SDL_WINDOW_ALWAYS_ON_TOP
 #endif
 #define BUFFER_SIZE                   16384
 
@@ -46,26 +47,28 @@ static SDL_Renderer *renderer = NULL;
 static SDL_Texture  *texture  = NULL;
 
 
-void r_init(void) {
+void r_init(struct mui_init_cfg_t CFG){
+  SDL_Log("SDL_WINDOW_OPTIONS:%d\n",SDL_WINDOW_OPTIONS);
+  SDL_Log("OPTIONS:%d\n",CFG.options);
+  SDL_Log("Offset:%dx%d\n",CFG.x_offset,CFG.y_offset);
+  SDL_Log("size:%dx%d\n",CFG.width,CFG.height);
   window = SDL_CreateWindow(
-    WINDOW_TITLE,
-    WINDOW_X_OFFSET, WINDOW_Y_OFFSET,
-    width, height,
-    SDL_WINDOW_OPTIONS         \
-    __SDL_WINDOW_ALWAYS_ON_TOP \
-    __SDL_WINDOW_BORDERLESS    \
-    __SDL_WINDOW_HIDDEN        \
+    CFG.title,
+    CFG.x_offset, CFG.y_offset,
+    CFG.width, CFG.height,
+    CFG.options
     );
+  int window_id = SDL_GetWindowID(window);
+  char *window_title = SDL_GetWindowTitle(window);
+  SDL_SetWindowGrab(window,SDL_FALSE);
+  SDL_Log("Created Window ID #%d with title '%s'",window_id,window_title);
 
   /* force a renderer for testing */
   SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
-//  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-//  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
 
   int flags = 0;
   flags |= SDL_RENDERER_ACCELERATED;
-  // flags |= SDL_RENDERER_PRESENTVSYNC;
   renderer = SDL_CreateRenderer(window, -1, flags);
   if (renderer == NULL) {
     SDL_Log("Error creating SDL renderer: %s", SDL_GetError());
@@ -231,6 +234,12 @@ void r_set_clip_rect(mu_Rect rect) {
   r.w = rect.w;
   r.h = rect.h;
   SDL_RenderSetClipRect(renderer, &r);
+}
+
+void r_transparent(){
+  flush();
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+  SDL_RenderClear(renderer);
 }
 
 
