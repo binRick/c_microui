@@ -1,12 +1,17 @@
 #pragma once
-#include "../mui-basic/mui-basic.h"
+#include "../mui-rectangle/mui-rectangle.h"
 #include "../mui/mui.h"
+#include "active-app/active-app.h"
+#include "bytes/bytes.h"
+#include "c_stringfn/include/stringfn.h"
+#include "ms/ms.h"
+#include "rectangle/rectangle.h"
 #define          BUTTONS_PER_ROW    5
 #define          BUTTON_PADDING     5
 #define          BUTTON_SIZE        125
 #define          BUTTON_ICON        0
 #define          BUTTON_HEIGHT      25
-#define CFG_TITLE                   "Basic App"
+#define CFG_TITLE                   "Rectangle Manager"
 #define CFG_X_OFFSET                50
 #define CFG_Y_OFFSET                50
 #define CFG_WIDTH                   (BUTTON_SIZE * BUTTONS_PER_ROW)
@@ -33,7 +38,6 @@ typedef struct {
 } color_rgb_t;
 //////////////////////////////////////////////////////////////////////////
 int pid_pre();
-int pid_post(int);
 //////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////
@@ -54,6 +58,7 @@ const size_t  RELOAD_WINDOWS_LIST_INTERVAL_MS = 2000;
 size_t        last_windows_list_reloaded_ts   = 0;
 SDL_mutex     *windows_mutex;
 SDL_Thread    *poll_windows_thread;
+SDL_Thread    *poll_rec_thread;
 bool          poll_windows_thread_active = false;
 window_t      *cur_selected_window       = NULL;
 SDL_Texture   *texture;
@@ -98,8 +103,137 @@ static int poll_windows_thread_function(void *ARGS){
   return(0);
 } /* poll_windows_thread_function */
 
-static void basic_window(mu_Context *ctx) {
-  if (mu_begin_window_ex(ctx, "Basic", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
+struct rectangle_info_t {
+  size_t                 rectangle_info_update_interval_ms;
+  int                    display_width, todo_width, rectangle_pid;
+  bool                   todo_enabled, poller_active;
+  char                   *todo_app, *config, *buf, *title;
+  unsigned long          last_update_ts;
+  size_t                 updates_qty, update_dur_ms, label_width, value_width;
+  struct StringFNStrings config_lines;
+  SDL_mutex              *mutex;
+};
+static struct rectangle_info_t *rec = &(struct rectangle_info_t){
+  .title                             = "Execution Info",
+  .last_update_ts                    = 0,
+  .updates_qty                       = 0,
+  .update_dur_ms                     = 0,
+  .label_width                       = 100, .value_width = 45,
+  .rectangle_info_update_interval_ms = 3000,
+  .poller_active                     = true,
+  .mutex                             = NULL,
+};
+
+void update_rectangle_info(bool FORCE_UPDATE){
+  if ((FORCE_UPDATE == true) || rec->last_update_ts == 0 || ((timestamp() - rec->last_update_ts) > rec->rectangle_info_update_interval_ms)) {
+    size_t started = timestamp();
+    rec->updates_qty++;
+    rec->display_width = get_display_width();
+    rec->todo_width    = rectangle_get_todo_width();
+    rec->rectangle_pid = rectangle_get_pid();
+    rec->todo_app      = rectangle_get_todo_app();
+    rec->todo_enabled  = rectangle_get_todo_mode_enabled();
+    if ((FORCE_UPDATE) || rec->last_update_ts == 0 || ((timestamp() - rec->last_update_ts) > rec->rectangle_info_update_interval_ms * 5)) {
+      rec->config       = rectangle_get_config();
+      rec->config_lines = stringfn_split_lines_and_trim(rec->config);
+    }
+    rec->update_dur_ms  = (size_t)(timestamp() - started);
+    rec->last_update_ts = timestamp();
+  }
+}
+
+int update_rectangle_info_thread(void *PARAM){
+  SDL_LockMutex(rec->mutex);
+  bool active = rec->poller_active;
+  SDL_UnlockMutex(rec->mutex);
+  while (active == true) {
+    SDL_LockMutex(rec->mutex);
+    update_rectangle_info(false);
+    size_t dur = rec->rectangle_info_update_interval_ms;
+    SDL_UnlockMutex(rec->mutex);
+    usleep(1000 * dur);
+    SDL_LockMutex(rec->mutex);
+    active = rec->poller_active;
+    SDL_UnlockMutex(rec->mutex);
+  }
+  return(0);
+}
+
+static void rectangle_state_window(mu_Context *ctx) {
+  if (mu_begin_window_ex(ctx, "Rectangle State", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
+    SDL_LockMutex(rec->mutex);
+    {
+      asprintf(&rec->buf, "%s", rec->title);
+      if (mu_header_ex(ctx, rec->buf, MU_OPT_NODRAG | MU_OPT_EXPANDED)) {
+        mu_layout_row(ctx,
+                      8,
+                      (int[]) {
+          rec->label_width, rec->value_width,
+          rec->label_width, rec->value_width,
+          rec->label_width, rec->value_width,
+          rec->label_width, rec->value_width,
+        },
+                      0);
+
+        mu_label(ctx, "PID:");
+        asprintf(&rec->buf, "%d", rec->rectangle_pid); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Todo Enabled:");
+        asprintf(&rec->buf, "%s", (rec->todo_enabled == true) ? "Yes" : "No"); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Todo App:");
+        asprintf(&rec->buf, "%s", rec->todo_app); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Todo Width:");
+        asprintf(&rec->buf, "%dpx", rec->todo_width); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Update Duration:");
+        asprintf(&rec->buf, "%s", milliseconds_to_string(rec->update_dur_ms)); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Display Width:");
+        asprintf(&rec->buf, "%dpx", rec->display_width); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Config Size:");
+        asprintf(&rec->buf, "%s", bytes_to_string(strlen(rec->config))); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Config Lines:");
+        asprintf(&rec->buf, "%d", rec->config_lines.count); mu_label(ctx, rec->buf);
+
+        mu_label(ctx, "Update Interval:");
+        asprintf(&rec->buf, "%s", milliseconds_to_string(rec->rectangle_info_update_interval_ms)); mu_label(ctx, rec->buf);
+
+        if (rec->buf) {
+          free(rec->buf);
+        }
+      }
+    }
+    SDL_UnlockMutex(rec->mutex);
+
+    if (mu_header_ex(ctx, "Controller", MU_OPT_NODRAG | MU_OPT_EXPANDED)) {
+      mu_layout_row(ctx, 3, (int[]) { 100, 100, -1 }, 0);
+      mu_label(ctx, "Test buttons 1:");
+      if (mu_button(ctx, "Popup")) {
+        mu_open_popup(ctx, "Popup");
+      }
+      if (mu_begin_popup(ctx, "Popup")) {
+        if (mu_button_ex(ctx, "Hello", 0, MU_OPT_ALIGNRIGHT)) {
+          SDL_Log("popup 1");
+        }
+        if (mu_button_ex(ctx, "World", 0, MU_OPT_ALIGNRIGHT)) {
+          SDL_Log("popup 2");
+        }
+        mu_end_popup(ctx);
+      }
+      if (mu_button(ctx, "Button 1")) {
+        SDL_Log("Pressed button 1");
+      }
+    }
+    mu_end_window(ctx);
+  }
+} /* rectangle_state_window */
+
+static void rectangle_windows_window(mu_Context *ctx) {
+  if (mu_begin_window_ex(ctx, "Windows", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, CFG.width);
     win->rect.h = mu_max(win->rect.h, CFG.height);
@@ -172,7 +306,7 @@ static void style_window(mu_Context *ctx) {
 
 static void process_frame(mu_Context *ctx) {
   mu_begin(ctx);
-  basic_window(ctx);
+  rectangle_state_window(ctx);
   mu_end(ctx);
 }
 
@@ -204,20 +338,15 @@ int text_height(mu_Font font) {
   return(r_get_text_height());
 }
 
-int pid_post(int pid){
-  if (RETAIN_INITIAL_FOCUS) {
-    SDL_Log("setting focused process to pid %d", pid);
-    bool ok = set_focused_pid(pid);
-    printf("set ok:%d\n", ok);
-    return(ok);
-  }
-  return(0);
-}
+static int  orig_focused_pid     = -1;
+static bool orig_focused_pid_set = false;
 
-int mui_basic(){
+int mui_rectangle(){
   windows_mutex = SDL_CreateMutex();
   int threadReturnValue = -1;
-//  int focused_pid       = pid_pre();
+  if (orig_focused_pid == -1) {
+    orig_focused_pid = pid_pre();
+  }
   SDL_Init(SDL_INIT_EVERYTHING);
   r_init(CFG);
 
@@ -231,11 +360,22 @@ int mui_basic(){
   windows                    = get_windows();
   poll_windows_thread_active = true;
   SDL_UnlockMutex(windows_mutex);
+
   poll_windows_thread = SDL_CreateThread(poll_windows_thread_function, "PollWindows", (void *)NULL);
   if (NULL == poll_windows_thread) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateThread failed: %s\n", SDL_GetError());
   } else {
     SDL_Log("Thread poll windows created");
+  }
+
+  if (rec->mutex == NULL) {
+    rec->mutex = SDL_CreateMutex();
+  }
+  poll_rec_thread = SDL_CreateThread(update_rectangle_info_thread, "PollRectangle", (void *)NULL);
+  if (NULL == poll_rec_thread) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateThread update_rectangle_info_thread failed: %s\n", SDL_GetError());
+  } else {
+    SDL_Log("Thread poll rec info created");
   }
 
   /* main loop */
@@ -291,6 +431,10 @@ int mui_basic(){
       }
       } /* switch */
     }
+    if (orig_focused_pid_set == false) {
+      orig_focused_pid_set = true;
+      set_focused_pid(orig_focused_pid);
+    }
     process_frame(ctx);
     r_clear(mu_color(OUTER_BG[0], OUTER_BG[1], OUTER_BG[2], 255));
     mu_Command *cmd = NULL;
@@ -323,8 +467,8 @@ int mui_basic(){
 } /* main */
 
 int pid_pre(){
+  is_authorized_for_accessibility();
   int focused_pid = get_focused_pid();
-
   SDL_Log("found focused pid to be %d", focused_pid);
   return(focused_pid);
 }

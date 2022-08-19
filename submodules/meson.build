@@ -20,15 +20,18 @@ inc = [
   include_directories('c_deps/submodules/c_colors/parse-colors'),
   include_directories('c_deps/submodules/c_colors/submodules'),
   include_directories('c_deps/submodules'),
+  include_directories('c_deps/submodules/c_darwin'),
+  include_directories('c_deps/submodules/c_darwin/process'),
+  include_directories('c_deps/submodules/c_darwin/rectangle'),
   include_directories('.'),
 ]  
 
 subdir('c_deps/meson')
 subdir('c_deps/meson/deps/iconv')
+subdir('c_deps/submodules/c_darwin/process')
 subdir('c_deps/submodules/c_ansi/ansi-codes')
 subdir('c_deps/submodules/c_ansi/ansi-utils')
 subdir('c_deps/submodules/c_darwin/core-utils')
-subdir('c_deps/submodules/c_darwin/process')
 subdir('c_deps/submodules/c_darwin/kitty')
 subdir('c_deps/submodules/c_darwin/pbpaste')
 subdir('c_deps/submodules/c_darwin/pasteboard')
@@ -42,3 +45,4 @@ subdir('c_deps/submodules/c_colors/hex-png-pixel-utils')
 subdir('c_deps/submodules/c_colors/rgb-ansi-utils')
 subdir('c_deps/submodules/c_colors/colors-csv-parser')
 subdir('c_deps/submodules/c_colors/colors-json-parser')
+subdir('c_deps/submodules/c_darwin/rectangle')

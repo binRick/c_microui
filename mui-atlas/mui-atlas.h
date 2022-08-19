@@ -1,10 +1,10 @@
 #pragma once
 #include "../mui/mui.h"
-enum { 
+enum {
   ATLAS_WHITE = MU_ICON_MAX,
   ATLAS_FONT,
 };
-enum { 
+enum {
   ATLAS_WIDTH  = 128,
   ATLAS_HEIGHT = 128,
 };

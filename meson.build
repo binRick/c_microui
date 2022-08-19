@@ -67,6 +67,9 @@ subdir('mui-test')
 #//////////////////
 #subdir('mui-colors')
 #subdir('mui-colors-test')
+subdir('mui-rectangle')
+subdir('mui-rectangle-test')
+#//////////////////
 subdir('mui-basic')
 subdir('mui-basic-test')
 #//////////////////
