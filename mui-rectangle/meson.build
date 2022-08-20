@@ -24,6 +24,7 @@ mui_rectangle_inc = [
 mui_rectangle_deps = [
    window_utils_dep,
    tmt_dep,
+   b64_dep,
    rectangle_dep,
    process_dep,
    app_utils_dep,

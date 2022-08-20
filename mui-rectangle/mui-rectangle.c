@@ -1,5 +1,7 @@
 #pragma once
 #include "../mui-rectangle/mui-rectangle.h"
+#include "b64.c/b64.h"
+
 static struct mui_init_cfg_t CFG = {
   .title    = CFG_TITLE,
   .options  = CFG_OPTIONS,
@@ -41,9 +43,13 @@ int tmt_exec(struct tmt_exec_t *exec){
   exec->output_buffer = stringbuffer_new();
   TMT *vt = tmt_open(exec->rows, exec->cols, callback, (void *)exec, NULL);
   assert(vt != NULL);
-  tmt_write(vt, "\x1b[0;0H", 0);         //Bring cursor to (0,0).
-  tmt_write(vt, "\x1b[2J\x1b[?25h", 0);  //Clear terminal virtual screen, show cursor
+  tmt_reset(vt);
+//  tmt_write(vt, "\x1b[0;0H", 0);         //Bring cursor to (0,0).
+//  tmt_write(vt, "\x1b[2J\x1b[?25h", 0);  //Clear terminal virtual screen, show cursor
+  tmt_write(vt, "\x1b[?25h", 0);  //Clear terminal virtual screen, show cursor
+  tmt_write(vt, AC_RESETALL, 0);
   tmt_write(vt, exec->input, 0);
+  tmt_write(vt, AC_RESETALL "\r\n", 0);
   tmt_close(vt);
   exec->dur_ms = timestamp() - exec->started_ms;
   fprintf(stderr, AC_RESETALL
@@ -115,24 +121,6 @@ static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
     }
     struct StringBuffer *row_sb = stringbuffer_new();
     for (size_t c = 0; c < s->ncol; c++) {
-      printf(
-        AC_RESETALL AC_REVERSED AC_BLUE "Contents of" AC_RESETALL
-        AC_RESETALL " " AC_RESETALL
-        AC_RESETALL AC_BRIGHT_BLUE "%zdx%zd: " AC_RESETALL
-        AC_RESETALL AC_BRIGHT_YELLOW "%c" AC_RESETALL
-        AC_RESETALL " " AC_RESETALL
-        AC_RESETALL "(%s|%s underline|%s reverse|%s dim)" AC_RESETALL
-        AC_RESETALL "(fg:%d|bg:%d)\n" AC_RESETALL,
-        r + 1, c + 1,
-        s->lines[r]->chars[c].c,
-        s->lines[r]->chars[c].a.bold ? AC_RESETALL AC_REVERSED AC_GREEN "Bold" AC_RESETALL : AC_RESETALL AC_WHITE "Unbold" AC_RESETALL,
-        s->lines[r]->chars[c].a.underline ? "is" : "is not",
-        s->lines[r]->chars[c].a.reverse ? "is" : "is not",
-        s->lines[r]->chars[c].a.dim ? "is" : "is not",
-        (int)(s->lines[r]->chars[c].a.fg),
-        (int)(s->lines[r]->chars[c].a.bg)
-        );
-
       stringbuffer_append_string(row_sb, AC_RESETALL);
       if (s->lines[r]->chars[c].a.fg > -1) {
         stringbuffer_append_string(row_sb, "\x1b[");
@@ -156,10 +144,7 @@ static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
       if (s->lines[r]->chars[c].a.bold) {
         stringbuffer_append_string(row_sb, AC_BOLD);
       }
-
-      stringbuffer_append(row_sb,
-                          s->lines[r]->chars[c].c
-                          );
+      stringbuffer_append(row_sb, s->lines[r]->chars[c].c);
       qty_cells_printed++;
     }
     vector_push(lines, (char *)stringbuffer_to_string(row_sb));
@@ -257,20 +242,21 @@ void update_rectangle_info(bool FORCE_UPDATE){
       rec->config       = rectangle_get_config();
       rec->config_lines = stringfn_split_lines_and_trim(rec->config);
     }
+    char *input = ""
+                  "" AC_RESETALL ""
+                  AC_BLACK_WHITE "========================================" AC_RESETALL "\r\n"
+                  AC_BOLD AC_YELLOW_BLACK " yellow " AC_RESETALL
+                  AC_UNDERLINE AC_RED_WHITE " red " AC_RESETALL
+                  AC_ITALIC AC_GREEN_RED " green " AC_RESETALL
+                  AC_INVERSE AC_CYAN_RED " cyan " AC_RESETALL
+                  AC_FAINT AC_MAGENTA_YELLOW " magenta " AC_RESETALL
+                  "\r\n" AC_WHITE_BLACK "----------------------------------------" AC_RESETALL "\r\n"
+                  "";
+
     tmt_exec(&(struct tmt_exec_t){
-      .input = ""
-               AC_BOLD AC_YELLOW_BLACK " yellow " AC_RESETALL
-               AC_UNDERLINE AC_RED_WHITE " red " AC_RESETALL
-               AC_ITALIC AC_GREEN_RED " green " AC_RESETALL
-               AC_INVERSE AC_CYAN_RED " cyan " AC_RESETALL
-               AC_FAINT AC_MAGENTA_YELLOW " magenta " AC_RESETALL
-               "\r\n"
-               AC_BLACK_WHITE "==========" AC_RESETALL
-               "\r\n"
-               AC_WHITE_BLACK "----------" AC_RESETALL
-               "",
-      .rows = 5,
-      .cols = 60,
+      .input = input,
+      .rows  = 5,
+      .cols  = 80,
     });
     rec->last_update_ts = timestamp();
     rec->update_dur_ms  = (size_t)(rec->last_update_ts - started);
