@@ -1,4 +1,6 @@
 #pragma once
+#ifndef MUIBASICH
+#define MUIBASICH
 #include <assert.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
@@ -14,8 +16,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #define COLOR_NAMES_DB_PATH    "etc/colornames.bestof.sqlite"
-#include "../mui-render/mui-render-options.h"
-#include "../mui-render/mui-render.h"
 #include "../mui/mui.h"
 #include "c_deps/submodules/c_colors/db/db.h"
 #include "c_deps/submodules/c_darwin/active-app/active-app.h"
@@ -38,3 +38,5 @@
 #define WINDOW_WIDTH    650
 
 int mui_basic();
+
+#endif

@@ -67,12 +67,36 @@ inc = [
   include_directories('.'),
 ]
 subdir('meson')
+pngs = [
+  'Terminal_64x64x32',
+  ]
+fonts = [
+  'sourcecodepro',
+  'ibmplex',
+  'nerd',
+  'inconsolata',
+  'devicons',
+  'firacode',
+  'retro',
+  'froufrou',
+  'fontawesome',
+  'glasstty',
+  ]
 #//////////////////
-configure_file(
-  input: 'assets/nerd.ttf',
-  output: 'nerd.ttf',
-  copy: true,
-)
+foreach i : pngs
+  configure_file(
+    input: 'assets/'+i+'.png',
+    output: i+'.png',
+    copy: true,
+  )
+endforeach
+foreach f : fonts
+  configure_file(
+    input: 'assets/'+f+'.ttf',
+    output: f+'.ttf',
+    copy: true,
+  )
+endforeach
 configure_file(
   input: 'assets/window_icon.bmp',  
   output: 'window_icon.bmp',   

@@ -4,10 +4,10 @@
 #include "b64.c/b64.h"
 
 static struct mui_init_cfg_t CFG = {
-  .title    = CFG_TITLE,
-  .options  = CFG_OPTIONS,
-  .x_offset = CFG_X_OFFSET,.y_offset  = CFG_Y_OFFSET,
-  .width    = CFG_WIDTH,   .height    = BASIC_WINDOW_HEIGHT,
+  .title            = CFG_TITLE,
+  .options          = CFG_OPTIONS,
+  .x_offset         = CFG_X_OFFSET, .y_offset = CFG_Y_OFFSET,
+  .width            = CFG_WIDTH,   .height    = BASIC_WINDOW_HEIGHT,
   .terminal_content = "none",
 };
 //////////////////////////////////////////////////////////////////////////
@@ -40,9 +40,9 @@ static struct rectangle_info_t *rec = &(struct rectangle_info_t){
 
 //////////////////////////////////////////////////////////////////////////
 int tmt_exec(struct tmt_exec_t *exec){
-  exec->started_ms    = timestamp();
-  exec->output_lines  = vector_new();
-  exec->output_buffer = stringbuffer_new();
+  exec->started_ms       = timestamp();
+  exec->output_lines     = vector_new();
+  exec->output_buffer    = stringbuffer_new();
   exec->plaintext_buffer = stringbuffer_new();
   TMT *vt = tmt_open(exec->rows, exec->cols, callback, (void *)exec, NULL);
   assert(vt != NULL);
@@ -113,9 +113,9 @@ static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
   const TMTPOINT      *c                = tmt_cursor(vt);
   unsigned int        qty_cells_printed = 0;
   struct Vector       *lines            = vector_new();
-  struct Vector       *plaintext_lines            = vector_new();
+  struct Vector       *plaintext_lines  = vector_new();
   struct StringBuffer *terminal_buffer  = stringbuffer_new();
-  struct StringBuffer *plaintext_buffer  = stringbuffer_new();
+  struct StringBuffer *plaintext_buffer = stringbuffer_new();
 
   for (size_t r = 0; r < s->nline; r++) {
     if (!s->lines[r]->dirty) {
@@ -123,10 +123,10 @@ static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
       stringbuffer_append_string(terminal_buffer, (char *)vector_get(exec->output_lines, r));
       stringbuffer_append_string(terminal_buffer, "\r\n");
       stringbuffer_append_string(plaintext_buffer, (char *)vector_get(exec->plaintext_lines, r));
-    stringbuffer_append_string(plaintext_buffer, "\r\n");
+      stringbuffer_append_string(plaintext_buffer, "\n");
       continue;
     }
-    struct StringBuffer *row_sb = stringbuffer_new();
+    struct StringBuffer *row_sb           = stringbuffer_new();
     struct StringBuffer *row_plaintext_sb = stringbuffer_new();
     for (size_t c = 0; c < s->ncol; c++) {
       stringbuffer_append_string(row_sb, AC_RESETALL);
@@ -159,7 +159,7 @@ static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
     vector_push(lines, (char *)stringbuffer_to_string(row_sb));
     vector_push(plaintext_lines, (char *)stringbuffer_to_string(row_plaintext_sb));
     stringbuffer_append_string(row_sb, "\r\n");
-    stringbuffer_append_string(row_plaintext_sb, "\r\n");
+    stringbuffer_append_string(row_plaintext_sb, "\n");
     stringbuffer_append_string(terminal_buffer, stringbuffer_to_string(row_sb));
     stringbuffer_append_string(plaintext_buffer, stringbuffer_to_string(row_plaintext_sb));
     stringbuffer_release(row_sb);
@@ -176,9 +176,9 @@ static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
   stringbuffer_release(exec->output_buffer);
   stringbuffer_release(exec->plaintext_buffer);
 
-  exec->output_lines  = lines;
+  exec->output_lines     = lines;
   exec->plaintext_lines  = plaintext_lines;
-  exec->output_buffer = terminal_buffer;
+  exec->output_buffer    = terminal_buffer;
   exec->plaintext_buffer = plaintext_buffer;
   tmt_clean(vt);
 } /* printTerminal */
@@ -245,15 +245,16 @@ static int poll_windows_thread_function(void *ARGS){
   return(0);
 } /* poll_windows_thread_function */
 
-    const char *input = "" AC_RESETALL
-                  AC_BLACK_WHITE "----------" AC_RESETALL "\r\n"
-                  AC_BOLD AC_YELLOW_BLACK " yellow " AC_RESETALL "\r\n"
-                  AC_UNDERLINE AC_RED_WHITE " red " AC_RESETALL "\r\n"
-                  AC_ITALIC AC_GREEN_RED " green " AC_RESETALL "\r\n"
-                  AC_INVERSE AC_CYAN_RED " cyan " AC_RESETALL "\r\n"
-                  AC_FAINT AC_MAGENTA_YELLOW " magenta " AC_RESETALL "\r\n"
-                  AC_WHITE_BLACK "--------" AC_RESETALL 
-                  "";
+const char *input = "" AC_RESETALL
+                    AC_BLACK_WHITE "----------" AC_RESETALL "\r\n"
+                    AC_BOLD AC_YELLOW_BLACK " yellow " AC_RESETALL "\r\n"
+                    AC_UNDERLINE AC_RED_WHITE " red " AC_RESETALL "\r\n"
+                    AC_ITALIC AC_GREEN_RED " green " AC_RESETALL "\r\n"
+                    AC_INVERSE AC_CYAN_RED " cyan " AC_RESETALL "\r\n"
+                    AC_FAINT AC_MAGENTA_YELLOW " magenta " AC_RESETALL "\r\n"
+                    AC_WHITE_BLACK "--------" AC_RESETALL
+                    "";
+
 void update_rectangle_info(bool FORCE_UPDATE){
   if ((FORCE_UPDATE == true) || rec->last_update_ts == 0 || ((timestamp() - rec->last_update_ts) > rec->rectangle_info_update_interval_ms)) {
     size_t started = timestamp();

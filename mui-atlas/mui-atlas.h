@@ -1,4 +1,6 @@
 #pragma once
+#ifndef MUIATLASH
+#define MUIATLASH
 #include "../mui/mui.h"
 enum {
   ATLAS_WHITE = MU_ICON_MAX,
@@ -997,3 +999,5 @@ static mu_Rect       atlas[] = {
   [ATLAS_FONT + 126]  = { 102, 51, 6,  17 },
   [ATLAS_FONT + 127]  = { 108, 51, 6,  17 },
 };
+
+#endif

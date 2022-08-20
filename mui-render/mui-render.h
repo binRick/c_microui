@@ -1,10 +1,24 @@
 #pragma once
+#ifndef MUIRENDERH
+#define MUIRENDERH
+#include "../mui/mui.h"
+#include "mui-icons.h"
 #include "mui-render-options.h"
 //////////////////////////////
-#define FONT_FILE             "nerd.ttf"
-#define SDL_WINDOW_OPTIONS    SDL_WINDOW_ALLOW_HIGHDPI
-#define IMG_PATH              "/tmp/a.png"
-#define CREATE_RENDERER       true
+#define FONT_FILE_NERD             "nerd"
+#define FONT_FILE_SOURCECODEPRO    "sourcecodepro"
+#define FONT_FILE_GLASSTTY         "glasstty"
+#define FONT_FILE_IBMPLEX          "ibmplex"
+#define FONT_FILE_INCONSOLATA      "inconsolata"
+#define FONT_FILE_DEVICONS         "devicons"
+#define FONT_FILE_FIRACODE         "firacode"
+#define FONT_FILE_RETRO            "retro"
+#define FONT_FILE_FROUFROU         "froufrou"
+#define FONT_FILE_FONTAWESOME      "fontawesome"
+#define FONT_FILE                  FONT_FILE_GLASSTTY ".ttf"
+#define SDL_WINDOW_OPTIONS         SDL_WINDOW_ALLOW_HIGHDPI
+#define IMG_PATH                   "/tmp/a.png"
+#define CREATE_RENDERER            true
 #define __SDL_WINDOW_HIDDEN
 #define __SDL_WINDOW_ALWAYS_ON_TOP
 #define __SDL_WINDOW_BORDERLESS
@@ -51,7 +65,7 @@ struct mui_init_cfg_t {
   bool retain_initial_focus;
   char *terminal_content;
 };
-int term_cols,term_rows;
+int term_cols, term_rows;
 void r_init(struct mui_init_cfg_t CFG);
 void r_draw_rect(mu_Rect rect, mu_Color color);
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color);
@@ -63,3 +77,5 @@ void r_clear(mu_Color color);
 void r_transparent();
 void r_present(void);
 void render_terminal(struct mui_init_cfg_t CFG);
+
+#endif

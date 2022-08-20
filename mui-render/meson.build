@@ -1,5 +1,6 @@
 mui_render_srcs = [
   'mui-render.c',
+  'mui-icons.c',
 ]
 mui_render_inc = [
  inc,
@@ -13,7 +14,9 @@ mui_render_deps = [
   sdl2_ttf_dep,
   sdl2_image_dep,
   mui_atlas_dep,
+  stb_dep,
   mui_dep,
+  incbin_dep,
 ]
 mui_cargs = [
 ]

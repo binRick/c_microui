@@ -1,4 +1,6 @@
 #pragma once
+#ifndef MUIBASICC
+#define MUIBASICC
 #include "../mui-basic/mui-basic.h"
 #include "../mui/mui.h"
 #define          BUTTONS_PER_ROW    5
@@ -28,9 +30,6 @@ static struct mui_init_cfg_t CFG = {
 };
 #define RETAIN_INITIAL_FOCUS    true
 //////////////////////////////////////////////////////////////////////////
-typedef struct {
-  int red, green, blue;
-} color_rgb_t;
 //////////////////////////////////////////////////////////////////////////
 int pid_pre();
 int pid_post(int);
@@ -328,3 +327,5 @@ int pid_pre(){
   SDL_Log("found focused pid to be %d", focused_pid);
   return(focused_pid);
 }
+
+#endif

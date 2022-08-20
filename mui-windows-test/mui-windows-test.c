@@ -1,4 +1,4 @@
-#include "mui-windows.h"
+#include "../mui-windows/mui-windows.h"
 #include <stdio.h>
 #include <string.h>
 

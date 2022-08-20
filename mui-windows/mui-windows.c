@@ -1,5 +1,6 @@
 #pragma once
-#include "../mui-windows/mui-windows.h"
+#ifndef MUIWINDOWSC
+#define MUIWINDOWSC
 #include "../mui/mui.h"
 #define CFG_TITLE       "my app"
 #define CFG_X_OFFSET    50
@@ -33,14 +34,10 @@ static struct mui_init_cfg_t CFG = {
 #define MAX_COLORS              1000
 #define DEBUG_COLORS            false
 //////////////////////////////////////////////////////////////////////////
-typedef struct {
-  int red, green, blue;
-} color_rgb_t;
 //////////////////////////////////////////////////////////////////////////
 color_rgb_t get_color_name_rgb(const char *COLOR_NAME);
 int pid_pre();
 int pid_post(int);
-int load_windows_hash(ColorsDB *DB);
 void iterate_windows_hash();
 void iterate_color_name_strings();
 void iterate_color_hex_strings();
@@ -65,10 +62,6 @@ static float           bg_text[3]      = { WINDOW_BACKGROUND_RED, WINDOW_BACKGRO
 static float           OUTER_BG[3]     = { 0, 0, 0 };
 volatile int           set_focus_qty   = 0;
 static size_t          windows_per_row = 3;
-//////////////////////////////////////////////////////////////////////////
-ColorsDB               *DB;
-struct djbhash         COLORS_HASH = { 0 }, COLOR_NAME_HASH = { 0 }, COLOR_HEX_HASH = { 0 };
-struct StringFNStrings COLOR_NAME_STRINGS, COLOR_HEX_STRINGS;
 //////////////////////////////////////////////////////////////////////////
 
 char          windows_qty_title[32];
@@ -519,3 +512,5 @@ void iterate_windows_hash(){
 int load_windows_hash(){
   return(0);
 } /* load_windows_hash */
+
+#endif
