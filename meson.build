@@ -1,7 +1,26 @@
 project('c_mui',['c'],default_options:['warning_level=0','c_std=gnu99','default_library=static'], version : '0.0.1',subproject_dir: 'submodules/c_deps/subprojects')
 cc = meson.get_compiler('c')
 pwd = meson.current_source_dir()
+sdl2_config_bin = find_program('sdl2-config',required:true)
+
+sdl2_libs_args = run_command(sdl2_config_bin, '--libs', check: true).stdout().strip()
+sdl2_cflags_args = run_command(sdl2_config_bin, '--cflags', check: true).stdout().strip()
 c_deps_dir = join_paths(meson.current_source_dir(),'submodules/c_deps')
+add_global_arguments(
+  '-I/usr/local/Cellar/sdl2_image/2.6.1/include',
+  '-I/usr/local/Cellar/sdl2_image/2.6.1/include/SDL2',
+  '-I/usr/local/Cellar/sdl2_ttf/2.20.0/include',
+  '-I/usr/local/Cellar/sdl2_ttf/2.20.0/include/SDL2',
+  '-I/usr/local/Cellar/sdl2/2.0.22/include',
+  '-I/usr/local/Cellar/sdl2/2.0.22/include/SDL2',
+  '-Wno-unused-command-line-argument',
+  '-D_THREAD_SAFE',
+  '-L/usr/local/lib',
+  '-lSDL2','-lSDL2_ttf','-lSDL2_image',
+  sdl2_cflags_args,
+  sdl2_libs_args,
+  language : 'c',
+)
 #############################################################
 inc = [
   include_directories('./'),
@@ -49,6 +68,11 @@ inc = [
 ]
 subdir('meson')
 #//////////////////
+configure_file(
+  input: 'assets/nerd.ttf',
+  output: 'nerd.ttf',
+  copy: true,
+)
 configure_file(
   input: 'assets/window_icon.bmp',  
   output: 'window_icon.bmp',   

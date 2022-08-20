@@ -1,49 +1,185 @@
 #pragma once
 #include "../mui-rectangle/mui-rectangle.h"
-#include "../mui/mui.h"
-#include "active-app/active-app.h"
-#include "bytes/bytes.h"
-#include "c_stringfn/include/stringfn.h"
-#include "ms/ms.h"
-#include "rectangle/rectangle.h"
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <SDL2/SDL_ttf.h>
-#define          BUTTONS_PER_ROW    5
-#define          BUTTON_PADDING     5
-#define          BUTTON_SIZE        125
-#define          BUTTON_ICON        0
-#define          BUTTON_HEIGHT      25
-#define CFG_TITLE                   "Rectangle Manager"
-#define CFG_X_OFFSET                50
-#define CFG_Y_OFFSET                50
-#define CFG_WIDTH                   (BUTTON_SIZE * BUTTONS_PER_ROW)
-#define CFG_OPTIONS         \
-  SDL_WINDOW_ALLOW_HIGHDPI  \
-  | SDL_WINDOW_OPENGL       \
-  | SDL_WINDOW_POPUP_MENU   \
-  | SDL_WINDOW_BORDERLESS   \
-  | SDL_WINDOW_SKIP_TASKBAR \
-  | SDL_WINDOW_ALWAYS_ON_TOP
-#define BASIC_WINDOW_TITLE          "Windows"
-#define BASIC_WINDOW_HEIGHT         300
-#define BASIC_WINDOW_OPTIONS        MU_OPT_NODRAG | MU_OPT_NOCLOSE
 static struct mui_init_cfg_t CFG = {
   .title    = CFG_TITLE,
   .options  = CFG_OPTIONS,
   .x_offset = CFG_X_OFFSET,.y_offset  = CFG_Y_OFFSET,
   .width    = CFG_WIDTH,   .height    = BASIC_WINDOW_HEIGHT,
 };
-#define RETAIN_INITIAL_FOCUS    true
 //////////////////////////////////////////////////////////////////////////
-typedef struct {
-  int red, green, blue;
-} color_rgb_t;
+static int pid_pre();
+static void callback(tmt_msg_t m, TMT *vt, void *EXEC, void *c);
+static void printTerminal(TMT *vt, struct tmt_exec_t *exec);
 //////////////////////////////////////////////////////////////////////////
-int pid_pre();
-//////////////////////////////////////////////////////////////////////////
+struct rectangle_info_t {
+  size_t                    rectangle_info_update_interval_ms;
+  int                       display_width, todo_width, rectangle_pid;
+  bool                      todo_enabled, poller_active;
+  char                      *todo_app, *config, *buf, *title;
+  unsigned long             last_update_ts;
+  size_t                    updates_qty, update_dur_ms, label_width, value_width;
+  struct StringFNStrings    config_lines;
+  SDL_mutex                 *mutex;
+  struct keycode_modifier_t *kcm;
+};
+static struct rectangle_info_t *rec = &(struct rectangle_info_t){
+  .title                             = "Execution Info",
+  .rectangle_info_update_interval_ms = 3000,
+  .label_width                       = 90,
+  .value_width                       = 55,
+  .last_update_ts                    = 0,
+  .updates_qty                       = 0,
+  .update_dur_ms                     = 0,
+  .poller_active                     = true,
+  .mutex                             = NULL,
+};
 
+//////////////////////////////////////////////////////////////////////////
+int tmt_exec(struct tmt_exec_t *exec){
+  exec->started_ms    = timestamp();
+  exec->output_lines  = vector_new();
+  exec->output_buffer = stringbuffer_new();
+  TMT *vt = tmt_open(exec->rows, exec->cols, callback, (void *)exec, NULL);
+  assert(vt != NULL);
+  tmt_write(vt, "\x1b[0;0H", 0);         //Bring cursor to (0,0).
+  tmt_write(vt, "\x1b[2J\x1b[?25h", 0);  //Clear terminal virtual screen, show cursor
+  tmt_write(vt, exec->input, 0);
+  tmt_close(vt);
+  exec->dur_ms = timestamp() - exec->started_ms;
+  fprintf(stderr, AC_RESETALL
+          AC_REVERSED AC_BRIGHT_YELLOW AC_BOLD "%lu callbacks, %lu lines, %lu chars in %ldms\n" AC_RESETALL,
+          exec->callbacks_qty,
+          vector_size(exec->output_lines),
+          strlen(stringbuffer_to_string(exec->output_buffer)),
+          exec->dur_ms
+          );
+  fprintf(stderr, AC_RESETALL AC_REVERSED AC_BRIGHT_YELLOW AC_BOLD "cursor pos: %dx%d (%s)\n" AC_RESETALL, exec->cursor_pos_x, exec->cursor_pos_y, exec->cursor_state);
+  printf("\n=====================================\n");
+  printf(AC_RESETALL "%s" AC_RESETALL, stringbuffer_to_string(exec->output_buffer));
+  printf("\n=====================================\n");
+  return(EXIT_SUCCESS);
+}
+
+static void callback(tmt_msg_t m, TMT *vt, void *a, void *EXEC){
+  struct tmt_exec_t *exec = (struct tmt_exec_t *)EXEC;
+
+  exec->callbacks_qty++;
+  const TMTSCREEN *s = tmt_screen(vt);
+  const TMTPOINT  *c = tmt_cursor(vt);
+
+  switch (m) {
+  case TMT_MSG_CURSOR:
+    exec->cursor_pos_y = (c->r);
+    exec->cursor_pos_x = (c->c);
+    if (((const char *)a)[0] == 't') {
+      exec->cursor_state = "visible";
+    } else{
+      exec->cursor_state = "hidden";
+    }
+    break;
+
+  case TMT_MSG_BELL:
+    printf(
+      AC_RESETALL AC_BRIGHT_RED "Bell Rang!\n" AC_RESETALL
+      );
+    break;
+
+  case TMT_MSG_UPDATE:
+    printTerminal(vt, exec);
+    break;
+
+  case TMT_MSG_ANSWER:
+    printf("Terminal answered %s\n", (const char *)a);
+    break;
+
+  case TMT_MSG_MOVED:
+    exec->cursor_pos_y = (c->r) + 1;
+    exec->cursor_pos_x = (c->c) + 1;
+    break;
+  } /* switch */
+}   /* callback */
+
+static void printTerminal(TMT *vt, struct tmt_exec_t *exec){
+  const TMTSCREEN     *s                = tmt_screen(vt);
+  const TMTPOINT      *c                = tmt_cursor(vt);
+  unsigned int        qty_cells_printed = 0;
+  struct Vector       *lines            = vector_new();
+  struct StringBuffer *terminal_buffer  = stringbuffer_new();
+
+  for (size_t r = 0; r < s->nline; r++) {
+    if (!s->lines[r]->dirty) {
+      vector_push(lines, (char *)vector_get(exec->output_lines, r));
+      stringbuffer_append_string(terminal_buffer, (char *)vector_get(exec->output_lines, r));
+      stringbuffer_append_string(terminal_buffer, "\r\n");
+      continue;
+    }
+    struct StringBuffer *row_sb = stringbuffer_new();
+    for (size_t c = 0; c < s->ncol; c++) {
+      printf(
+        AC_RESETALL AC_REVERSED AC_BLUE "Contents of" AC_RESETALL
+        AC_RESETALL " " AC_RESETALL
+        AC_RESETALL AC_BRIGHT_BLUE "%zdx%zd: " AC_RESETALL
+        AC_RESETALL AC_BRIGHT_YELLOW "%c" AC_RESETALL
+        AC_RESETALL " " AC_RESETALL
+        AC_RESETALL "(%s|%s underline|%s reverse|%s dim)" AC_RESETALL
+        AC_RESETALL "(fg:%d|bg:%d)\n" AC_RESETALL,
+        r + 1, c + 1,
+        s->lines[r]->chars[c].c,
+        s->lines[r]->chars[c].a.bold ? AC_RESETALL AC_REVERSED AC_GREEN "Bold" AC_RESETALL : AC_RESETALL AC_WHITE "Unbold" AC_RESETALL,
+        s->lines[r]->chars[c].a.underline ? "is" : "is not",
+        s->lines[r]->chars[c].a.reverse ? "is" : "is not",
+        s->lines[r]->chars[c].a.dim ? "is" : "is not",
+        (int)(s->lines[r]->chars[c].a.fg),
+        (int)(s->lines[r]->chars[c].a.bg)
+        );
+
+      stringbuffer_append_string(row_sb, AC_RESETALL);
+      if (s->lines[r]->chars[c].a.fg > -1) {
+        stringbuffer_append_string(row_sb, "\x1b[");
+        stringbuffer_append_int(row_sb, ((int)(s->lines[r]->chars[c].a.fg) + 29));
+        stringbuffer_append_string(row_sb, "m");
+      }
+      if (s->lines[r]->chars[c].a.bg > -1) {
+        stringbuffer_append_string(row_sb, "\x1b[");
+        stringbuffer_append_int(row_sb, ((int)(s->lines[r]->chars[c].a.bg) + 39));
+        stringbuffer_append_string(row_sb, "m");
+      }
+      if (s->lines[r]->chars[c].a.reverse) {
+        stringbuffer_append_string(row_sb, AC_INVERSE);
+      }
+      if (s->lines[r]->chars[c].a.dim) {
+        stringbuffer_append_string(row_sb, AC_FAINT);
+      }
+      if (s->lines[r]->chars[c].a.underline) {
+        stringbuffer_append_string(row_sb, AC_UNDERLINE);
+      }
+      if (s->lines[r]->chars[c].a.bold) {
+        stringbuffer_append_string(row_sb, AC_BOLD);
+      }
+
+      stringbuffer_append(row_sb,
+                          s->lines[r]->chars[c].c
+                          );
+      qty_cells_printed++;
+    }
+    vector_push(lines, (char *)stringbuffer_to_string(row_sb));
+    stringbuffer_append_string(row_sb, "\r\n");
+    stringbuffer_append_string(terminal_buffer, stringbuffer_to_string(row_sb));
+    stringbuffer_release(row_sb);
+  }
+  printf(
+    AC_RESETALL AC_BRIGHT_GREEN AC_REVERSED "%d cells printed, %lu lines" AC_RESETALL
+    AC_RESETALL "\n" AC_RESETALL,
+    qty_cells_printed,
+    vector_size(lines)
+    );
+  vector_release(exec->output_lines);
+  stringbuffer_release(exec->output_buffer);
+
+  exec->output_lines  = lines;
+  exec->output_buffer = terminal_buffer;
+  tmt_clean(vt);
+} /* printTerminal */
 //////////////////////////////////////////////////////////////////////////
 static char        CUR_COLOR_HEX[32], CUR_COLOR_ROW[2048], CUR_COLOR_NAME[32] = "";
 static color_rgb_t CUR_COLOR_RGB    = { 0, 0, 0 };
@@ -107,29 +243,6 @@ static int poll_windows_thread_function(void *ARGS){
   return(0);
 } /* poll_windows_thread_function */
 
-struct rectangle_info_t {
-  size_t                    rectangle_info_update_interval_ms;
-  int                       display_width, todo_width, rectangle_pid;
-  bool                      todo_enabled, poller_active;
-  char                      *todo_app, *config, *buf, *title;
-  unsigned long             last_update_ts;
-  size_t                    updates_qty, update_dur_ms, label_width, value_width;
-  struct StringFNStrings    config_lines;
-  SDL_mutex                 *mutex;
-  struct keycode_modifier_t *kcm;
-};
-static struct rectangle_info_t *rec = &(struct rectangle_info_t){
-  .title                             = "Execution Info",
-  .rectangle_info_update_interval_ms = 10000,
-  .label_width                       = 90,
-  .value_width                       = 55,
-  .last_update_ts                    = 0,
-  .updates_qty                       = 0,
-  .update_dur_ms                     = 0,
-  .poller_active                     = true,
-  .mutex                             = NULL,
-};
-
 void update_rectangle_info(bool FORCE_UPDATE){
   if ((FORCE_UPDATE == true) || rec->last_update_ts == 0 || ((timestamp() - rec->last_update_ts) > rec->rectangle_info_update_interval_ms)) {
     size_t started = timestamp();
@@ -144,6 +257,21 @@ void update_rectangle_info(bool FORCE_UPDATE){
       rec->config       = rectangle_get_config();
       rec->config_lines = stringfn_split_lines_and_trim(rec->config);
     }
+    tmt_exec(&(struct tmt_exec_t){
+      .input = ""
+               AC_BOLD AC_YELLOW_BLACK " yellow " AC_RESETALL
+               AC_UNDERLINE AC_RED_WHITE " red " AC_RESETALL
+               AC_ITALIC AC_GREEN_RED " green " AC_RESETALL
+               AC_INVERSE AC_CYAN_RED " cyan " AC_RESETALL
+               AC_FAINT AC_MAGENTA_YELLOW " magenta " AC_RESETALL
+               "\r\n"
+               AC_BLACK_WHITE "==========" AC_RESETALL
+               "\r\n"
+               AC_WHITE_BLACK "----------" AC_RESETALL
+               "",
+      .rows = 5,
+      .cols = 60,
+    });
     rec->last_update_ts = timestamp();
     rec->update_dur_ms  = (size_t)(rec->last_update_ts - started);
   }
