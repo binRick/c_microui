@@ -52,16 +52,16 @@ extern SDL_Renderer *renderer;
 //////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////
-static char            CUR_COLOR_HEX[32], CUR_COLOR_ROW[2048], CUR_COLOR_NAME[32] = "";
-static color_rgb_t     CUR_COLOR_RGB    = { 0, 0, 0 };
-static color_rgb_t     CUR_COLOR_RGB_BG = { 0, 0, 0 };
-static char            logbuf[64000];
-static int             logbuf_updated  = 0;
-static float           bg[3]           = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
-static float           bg_text[3]      = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
-static float           OUTER_BG[3]     = { 0, 0, 0 };
-volatile int           set_focus_qty   = 0;
-static size_t          windows_per_row = 3;
+static char        CUR_COLOR_HEX[32], CUR_COLOR_ROW[2048], CUR_COLOR_NAME[32] = "";
+static color_rgb_t CUR_COLOR_RGB    = { 0, 0, 0 };
+static color_rgb_t CUR_COLOR_RGB_BG = { 0, 0, 0 };
+static char        logbuf[64000];
+static int         logbuf_updated  = 0;
+static float       bg[3]           = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+static float       bg_text[3]      = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, WINDOW_BACKGROUND_BLUE };
+static float       OUTER_BG[3]     = { 0, 0, 0 };
+volatile int       set_focus_qty   = 0;
+static size_t      windows_per_row = 3;
 //////////////////////////////////////////////////////////////////////////
 
 char          windows_qty_title[32];

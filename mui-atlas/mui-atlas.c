@@ -3,5 +3,4 @@
 #define MUIATLASC
 #include "mui-atlas.h"
 
-
 #endif

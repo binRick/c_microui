@@ -1,6 +1,14 @@
 #pragma once
 #ifndef MUIH
 #define MUIH
+#include "active-app/active-app.h"
+#include "app-utils/app-utils.h"
+#include "core-utils/core-utils.h"
+#include "process/process.h"
+#include "stb/stb_image.h"
+#include "SDL2/SDL_image.h"
+#include "timestamp/timestamp.h"
+#include "window-utils/window-utils.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdbool.h>
@@ -10,17 +18,9 @@
 #include <SDL2/SDL_hints.h>
 #include <SDL2/SDL_mutex.h>
 #include <SDL2/SDL_thread.h>
-#include "SDL2/SDL_image.h"
-#include "timestamp/timestamp.h"
-#include "app-utils/app-utils.h"
-#include "window-utils/window-utils.h"
-#include "active-app/active-app.h"
-#include "process/process.h"
-#include "stb/stb_image.h"
-#include "core-utils/core-utils.h"
-#define MU_VERSION                "2.01"
+#define MU_VERSION    "2.01"
 typedef struct {
-    int red, green, blue;
+  int red, green, blue;
 } color_rgb_t;
 #define MU_COMMANDLIST_SIZE       (256 * 1024)
 #define MU_ROOTLIST_SIZE          32
@@ -308,7 +308,7 @@ void mu_end_popup(mu_Context *ctx);
 void mu_begin_panel_ex(mu_Context *ctx, const char *name, int opt);
 void mu_end_panel(mu_Context *ctx);
 
+#include "../mui-atlas/mui-atlas.h"
 #include "../mui-render/mui-render-options.h"
 #include "../mui-render/mui-render.h"
-#include "../mui-atlas/mui-atlas.h"
 #endif
