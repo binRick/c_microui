@@ -1,5 +1,7 @@
 #pragma once
+#define TERMINAL_FONT_SIZE 30
 #include "mui-render/mui-render.h"
+#include "../mui-rectangle/mui-rectangle.h"
 TTF_Font            *font;
 SDL_Surface         *text = NULL;
 static GLfloat      tex_buf[BUFFER_SIZE * 8];
@@ -12,36 +14,52 @@ SDL_Window          *window2   = NULL;
 static SDL_Renderer *renderer  = NULL;
 SDL_Renderer        *renderer2 = NULL;
 static SDL_Texture  *texture   = NULL;
-
+#define GL_RENDERER true
 void render_terminal(struct mui_init_cfg_t CFG){
   int       rendermethod = TextRenderShaded;
   int       renderstyle  = TTF_STYLE_NORMAL;
   int       rendertype   = RENDER_LATIN1;
   int       outline      = 0;
   int       hinting      = TTF_HINTING_NORMAL;
-  int       kerning      = 0;
+  int       kerning      = 1;
   char      *font_file   = "../" FONT_FILE;
   char      *string      = "ok123";
   SDL_Color white        = { 0xFF, 0xFF, 0xFF, 0 };
   SDL_Color black        = { 0x00, 0x00, 0x00, 0 };
   SDL_Color *forecol;
   SDL_Color *backcol;
-  int       ptsize = 12;
+  int       ptsize = TERMINAL_FONT_SIZE;
 
   font = TTF_OpenFont(font_file, ptsize);
   if (font == NULL) {
-    SDL_Log("Couldn't load %d pt font from %s: %s\n",
-            ptsize, font_file, SDL_GetError());
+    SDL_Log("Couldn't load %d pt font from %s: %s\n",ptsize, font_file, SDL_GetError());
     exit(2);
   }
-  TTF_SetFontStyle(font, renderstyle);
-  TTF_SetFontOutline(font, outline);
   TTF_SetFontKerning(font, kerning);
-  TTF_SetFontHinting(font, hinting);
+  TTF_SetFontHinting(font, TTF_HINTING_MONO);
+  TTF_SetFontStyle(font, TTF_STYLE_BOLD);
+  TTF_SetFontStyle(font, TTF_STYLE_ITALIC);
+  TTF_SetFontStyle(font, TTF_STYLE_UNDERLINE);
+  TTF_SetFontStyle(font, TTF_STYLE_UNDERLINE|TTF_STYLE_UNDERLINE|TTF_STYLE_ITALIC|TTF_STYLE_BOLD);
+  TTF_SetFontStyle(font, TTF_STYLE_NORMAL);
+  TTF_SetFontOutline(font, outline);
+  int is_fixed_width = TTF_FontFaceIsFixedWidth(font);
+  int x_w,x_h, r2_w,r2_h;
+  TTF_SizeText(font,"O",&x_w,&x_h);
+  struct SDL_RendererInfo *renderer2_info = malloc(sizeof(struct SDL_RendererInfo));
+SDL_GetRendererInfo(renderer2,renderer2_info);
+SDL_GetRendererOutputSize(renderer2,&r2_w,&r2_h);
+term_cols = r2_w/x_w;
+term_rows = r2_h/x_h;
+  SDL_Log("is fixed width: %d, x width: %d, x height: %d, term width: %x, term height: %d\n\tterminal rows: %d, terminal cols: %d",
+      is_fixed_width,x_w,x_h,
+      r2_w,r2_h,
+      term_rows,
+      term_cols
+      );
   _Scene scene;
-  char   message[] = "xxxxxxxxxxxx";
 
-  text                = TTF_RenderText_Solid(font, string, *forecol);
+  text                = TTF_RenderText_Shaded_Wrapped(font, string, *forecol,*backcol,0);
   scene.captionRect.x = 4;
   scene.captionRect.y = 4;
   scene.captionRect.w = text->w;
@@ -50,7 +68,7 @@ void render_terminal(struct mui_init_cfg_t CFG){
   _Scene *s = &scene;
 
   SDL_FreeSurface(text);
-  text = TTF_RenderUTF8_Shaded(font, message, *forecol, *backcol);
+  text = TTF_RenderText_Shaded_Wrapped(font, CFG.terminal_content, *forecol, *backcol,0);
 
   if (text == NULL) {
     SDL_Log("Couldn't render text: %s\n", SDL_GetError());
@@ -63,17 +81,17 @@ void render_terminal(struct mui_init_cfg_t CFG){
 
   SDL_FreeSurface(Loading_Surf);
 
-  scene.messageRect.x = (CFG.width - text->w) / 2;
-  scene.messageRect.y = (CFG.height - text->h) / 2;
+  scene.messageRect.x = 0;
+  scene.messageRect.y = 1;
   scene.messageRect.w = text->w;
   scene.messageRect.h = text->h;
   scene.message       = SDL_CreateTextureFromSurface(renderer2, text);
-  SDL_Log("Font is generally %d big, and string is %d big\n",
-          TTF_FontHeight(font), text->h);
+  SDL_Log("Font height: %d, text height: %d, text width: %d, font ptsize: %d, \n",
+          TTF_FontHeight(font),text->h,text->w,ptsize);
   SDL_SetRenderDrawColor(renderer2, 0, 0, 0, 255);
   SDL_RenderClear(renderer2);
   //    SDL_RenderCopy(renderer2, Background_Tx, NULL, NULL);
-  SDL_RenderCopy(renderer2, s->caption, NULL, &(s->captionRect));
+//  SDL_RenderCopy(renderer2, s->caption, NULL, &(s->captionRect));
   SDL_RenderCopy(renderer2, s->message, NULL, &(s->messageRect));
   SDL_RenderPresent(renderer2);
 } /* render_terminal */
@@ -111,8 +129,9 @@ void r_init(struct mui_init_cfg_t CFG){
 
   int flags2 = SDL_RENDERER_ACCELERATED;
   /* force a renderer for testing */
-//  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
-//  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+  if(GL_RENDERER==true)
+     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
   int flags = 0;
   flags   |= SDL_RENDERER_ACCELERATED;

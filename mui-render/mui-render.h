@@ -49,7 +49,9 @@ struct mui_init_cfg_t {
   int  options;
   char *title;
   bool retain_initial_focus;
+  char *terminal_content;
 };
+int term_cols,term_rows;
 void r_init(struct mui_init_cfg_t CFG);
 void r_draw_rect(mu_Rect rect, mu_Color color);
 void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color);

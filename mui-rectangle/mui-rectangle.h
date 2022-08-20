@@ -73,8 +73,8 @@ struct tmt_exec_t {
   size_t                 rows, cols, callbacks_qty;
   int                    cursor_pos_x, cursor_pos_y;
   char                   *cursor_state;
-  struct StringFNStrings *output_lines;
-  struct StringBuffer    *output_buffer;
+  struct Vector *output_lines, *plaintext_lines;
+  struct StringBuffer    *output_buffer, *plaintext_buffer;
   long unsigned          started_ms, dur_ms;
 };
 typedef struct {
