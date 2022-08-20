@@ -47,8 +47,6 @@ int tmt_exec(struct tmt_exec_t *exec){
   TMT *vt = tmt_open(exec->rows, exec->cols, callback, (void *)exec, NULL);
   assert(vt != NULL);
   tmt_reset(vt);
-//  tmt_write(vt, "\x1b[0;0H", 0);         //Bring cursor to (0,0).
-//  tmt_write(vt, "\x1b[2J\x1b[?25h", 0);  //Clear terminal virtual screen, show cursor
   tmt_write(vt, "\x1b[?25h", 0);  //Clear terminal virtual screen, show cursor
   tmt_write(vt, exec->input, 0);
   tmt_close(vt);
@@ -297,7 +295,8 @@ int update_rectangle_info_thread(void *PARAM){
 }
 
 static void rectangle_state_window(mu_Context *ctx) {
-  if (mu_begin_window_ex(ctx, "Rectangle State", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
+if (mu_begin_window_ex(ctx, "Rectangle State", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
+
     SDL_LockMutex(rec->mutex);
     {
       asprintf(&rec->buf, "%s", rec->title);
@@ -346,8 +345,29 @@ static void rectangle_state_window(mu_Context *ctx) {
     SDL_UnlockMutex(rec->mutex);
 
     if (mu_header_ex(ctx, "Controller", MU_OPT_NODRAG | MU_OPT_EXPANDED)) {
-      mu_layout_row(ctx, 3, (int[]) { 100, 100, -1 }, 0);
+
+      static int checked = 1;
+      static int bgs = 100;
+      if(bgs == 100 && rec->rectangle_info_update_interval_ms > 100)
+        bgs = rec->rectangle_info_update_interval_ms;
+      mu_layout_row(ctx, 2, (int[]) { 200, -1 }, 0);
+      mu_checkbox(ctx, "Interval", &checked);
+      mu_slider_ex(ctx, &bgs, 500, 10000,100,"%.0f",MU_OPT_ALIGNCENTER);
+
+      mu_layout_row(ctx, 3, (int[]) { 200, 100, 100 }, 0);
       mu_label(ctx, "Test buttons 1:");
+      if (mu_button(ctx, "Popup1")) {
+        mu_open_popup(ctx, "Popup1");
+      }
+      if (mu_begin_popup(ctx, "Popup1")) {
+        if (mu_button_ex(ctx, "Hello1", 0, MU_OPT_ALIGNRIGHT)) {
+          SDL_Log("popup 11");
+        }
+        if (mu_button_ex(ctx, "World1", 0, MU_OPT_ALIGNRIGHT)) {
+          SDL_Log("popup 21");
+        }
+        mu_end_popup(ctx);
+      }
       if (mu_button(ctx, "Popup")) {
         mu_open_popup(ctx, "Popup");
       }
@@ -359,9 +379,6 @@ static void rectangle_state_window(mu_Context *ctx) {
           SDL_Log("popup 2");
         }
         mu_end_popup(ctx);
-      }
-      if (mu_button(ctx, "Button 1")) {
-        SDL_Log("Pressed button 1");
       }
     }
     mu_end_window(ctx);

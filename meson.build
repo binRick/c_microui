@@ -68,7 +68,6 @@ inc = [
 ]
 subdir('meson')
 pngs = [
-  'Terminal_64x64x32',
   ]
 fonts = [
   'sourcecodepro',

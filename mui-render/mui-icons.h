@@ -1,7 +1,6 @@
 #pragma once
 #ifndef MUIICONSH
 #define MUIICONSH
-#include <SDL2/SDL.h>
 /////////////////////////////////////////////////////////////////////////////
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
@@ -22,8 +21,6 @@ struct surface_icon_t {
 /////////////////////////////////////////////////////////////////////////////
 #include "../mui/mui.h"
 #include "incbin/incbin.h"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 /////////////////////////////////////////////////////////////////////////////
 void __mui_icons_constructor();
 struct surface_icon_t *get_surface_icon(char *ICON_NAME);

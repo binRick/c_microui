@@ -1,7 +1,8 @@
 #pragma once
 /////////////////////////////////////////////////////////////////////////
-#include "../mui-render/mui-icons.h"
 #include "../mui/mui.h"
+/////////////////////////////////////////////////////////////////////////
+#include "../mui-render/mui-icons.h"
 /////////////////////////////////////////////////////////////////////////
 INC_ICON(Terminal);
 /////////////////////////////////////////////////////////////////////////
@@ -9,7 +10,7 @@ struct surface_icon_t *get_surface_icon(char *ICON_NAME){
   struct surface_icon_t *i = malloc(sizeof(struct surface_icon_t));
 
   i->icon_name = ICON_NAME;
-  printf("icon name:  '%s'\n", ICON_NAME);
+  printf("icon name:  '%s'\n", i->icon_name);
   i->icon_data  = icon_Terminal_data;
   i->icon_size  = icon_Terminal_size;
   i->req_format = STBI_rgb_alpha;
