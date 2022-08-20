@@ -1,10 +1,28 @@
 #pragma once
 #include "mui-render/mui-render.h"
-
+#include <SDL2/SDL_ttf.h>
+TTF_Font *font;
 typedef float    GLfloat;
 typedef Uint8    GLubyte;
 typedef Uint32   GLuint;
+SDL_Surface *text = NULL;
 
+typedef enum {
+  TextRenderSolid,
+  TextRenderShaded,
+  TextRenderBlended
+} TextRenderMethod;
+typedef struct {
+  SDL_Texture *caption;
+  SDL_Rect    captionRect;
+  SDL_Texture *message;
+  SDL_Rect    messageRect;
+} _Scene;
+enum {
+  RENDER_LATIN1,
+  RENDER_UTF8,
+  RENDER_UNICODE
+} rendertype;
 #define SDL_WINDOW_OPTIONS    SDL_WINDOW_ALLOW_HIGHDPI
 #define IMG_PATH              "/tmp/a.png"
 #define CREATE_RENDERER       true
@@ -34,29 +52,47 @@ static GLuint       index_buf[BUFFER_SIZE * 6];
 
 static int          buf_idx;
 
-static SDL_Window   *window   = NULL;
-static SDL_Renderer *renderer = NULL;
-static SDL_Texture  *texture  = NULL;
+static SDL_Window   *window    = NULL;
+SDL_Window          *window2   = NULL;
+static SDL_Renderer *renderer  = NULL;
+SDL_Renderer        *renderer2 = NULL;
+static SDL_Texture  *texture   = NULL;
 
 void r_init(struct mui_init_cfg_t CFG){
   SDL_Log("SDL_WINDOW_OPTIONS:%d\n", SDL_WINDOW_OPTIONS);
   SDL_Log("OPTIONS:%d\n", CFG.options);
   SDL_Log("Offset:%dx%d\n", CFG.x_offset, CFG.y_offset);
   SDL_Log("size:%dx%d\n", CFG.width, CFG.height);
+  if (TTF_Init() < 0) {
+    SDL_Log("Couldn't initialize TTF: %s\n", SDL_GetError());
+    SDL_Quit();
+    return(2);
+  }
   window = SDL_CreateWindow(
     CFG.title,
     CFG.x_offset, CFG.y_offset,
     CFG.width, CFG.height,
     CFG.options
     );
-  int  window_id     = SDL_GetWindowID(window);
-  char *window_title = SDL_GetWindowTitle(window);
+  window2 = SDL_CreateWindow(
+    CFG.title,
+    CFG.x_offset, CFG.y_offset + CFG.height,
+    CFG.width, CFG.height,
+    CFG.options
+    );
+  int  window_id      = SDL_GetWindowID(window);
+  int  window_id2     = SDL_GetWindowID(window2);
+  char *window_title  = SDL_GetWindowTitle(window);
+  char *window_title2 = SDL_GetWindowTitle(window2);
   SDL_SetWindowGrab(window, SDL_FALSE);
+  //SDL_SetWindowGrab(window2, SDL_FALSE);
   SDL_Log("Created Window ID #%d with title '%s'", window_id, window_title);
+  SDL_Log("Created Window2 ID #%d with title '%s'", window_id2, window_title2);
 
+  int flags2 = SDL_RENDERER_ACCELERATED;
   /* force a renderer for testing */
-  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
-  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+//  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+//  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
   int flags = 0;
   flags   |= SDL_RENDERER_ACCELERATED;
@@ -69,6 +105,78 @@ void r_init(struct mui_init_cfg_t CFG){
     SDL_GetRendererInfo(renderer, &info);
     SDL_Log("Current SDL Renderer: %s", info.name);
   }
+  renderer2 = SDL_CreateRenderer(window2, -1, flags2);
+  if (renderer2 == NULL) {
+    SDL_Log("Error creating SDL renderer2: %s", SDL_GetError());
+    return;
+  } else {
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(renderer2, &info);
+    SDL_Log("Current SDL Renderer2: %s", info.name);
+  }
+  int       rendermethod = TextRenderShaded;
+  int       renderstyle  = TTF_STYLE_NORMAL;
+  int       rendertype   = RENDER_LATIN1;
+  int       outline      = 0;
+  int       hinting      = TTF_HINTING_NORMAL;
+  int       kerning      = 0;
+  char      *font_file   = "/tmp/nerd.ttf";
+  char      *string      = "ok123";
+  SDL_Color white        = { 0xFF, 0xFF, 0xFF, 0 };
+  SDL_Color black        = { 0x00, 0x00, 0x00, 0 };
+  SDL_Color *forecol;
+  SDL_Color *backcol;
+  int       ptsize = 18;
+//text = TTF_RenderText_Shaded(font, string, *forecol, *backcol);
+  font = TTF_OpenFont(font_file, ptsize);
+  if (font == NULL) {
+    SDL_Log("Couldn't load %d pt font from %s: %s\n",
+            ptsize, font_file, SDL_GetError());
+    exit(2);
+  }
+  TTF_SetFontStyle(font, renderstyle);
+  TTF_SetFontOutline(font, outline);
+  TTF_SetFontKerning(font, kerning);
+  TTF_SetFontHinting(font, hinting);
+  _Scene scene;
+  char   message[] = "xxxxxxxxxxxx";
+  text                = TTF_RenderText_Solid(font, string, *forecol);
+  scene.captionRect.x = 4;
+  scene.captionRect.y = 4;
+  scene.captionRect.w = text->w;
+  scene.captionRect.h = text->h;
+  scene.caption       = SDL_CreateTextureFromSurface(renderer2, text);
+  _Scene *s = &scene;
+
+  SDL_FreeSurface(text);
+  text = TTF_RenderUTF8_Shaded(font, message, *forecol, *backcol);
+  //       text = TTF_RenderText_Solid(font, message, *forecol);
+
+  if (text == NULL) {
+    SDL_Log("Couldn't render text: %s\n", SDL_GetError());
+    TTF_CloseFont(font);
+    exit(2);
+  }
+
+
+  SDL_Texture *Loading_Surf  = SDL_LoadBMP("/tmp/hello.bmp");
+  SDL_Texture *Background_Tx = SDL_CreateTextureFromSurface(renderer2, Loading_Surf);
+  SDL_FreeSurface(Loading_Surf);
+
+  scene.messageRect.x = (CFG.width - text->w) / 2;
+  scene.messageRect.y = (CFG.height - text->h) / 2;
+  scene.messageRect.w = text->w;
+  scene.messageRect.h = text->h;
+  scene.message       = SDL_CreateTextureFromSurface(renderer2, text);
+  SDL_Log("Font is generally %d big, and string is %d big\n",
+          TTF_FontHeight(font), text->h);
+  SDL_SetRenderDrawColor(renderer2, 0, 0, 0, 255);
+  SDL_RenderClear(renderer2);
+
+//    SDL_RenderCopy(renderer2, Background_Tx, NULL, NULL);
+  SDL_RenderCopy(renderer2, s->caption, NULL, &(s->captionRect));
+  SDL_RenderCopy(renderer2, s->message, NULL, &(s->messageRect));
+  SDL_RenderPresent(renderer2);
 
   texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STATIC, ATLAS_WIDTH, ATLAS_HEIGHT);
   if (texture == NULL) {

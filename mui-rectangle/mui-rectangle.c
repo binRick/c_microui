@@ -6,6 +6,10 @@
 #include "c_stringfn/include/stringfn.h"
 #include "ms/ms.h"
 #include "rectangle/rectangle.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <SDL2/SDL_ttf.h>
 #define          BUTTONS_PER_ROW    5
 #define          BUTTON_PADDING     5
 #define          BUTTON_SIZE        125
@@ -104,22 +108,24 @@ static int poll_windows_thread_function(void *ARGS){
 } /* poll_windows_thread_function */
 
 struct rectangle_info_t {
-  size_t                 rectangle_info_update_interval_ms;
-  int                    display_width, todo_width, rectangle_pid;
-  bool                   todo_enabled, poller_active;
-  char                   *todo_app, *config, *buf, *title;
-  unsigned long          last_update_ts;
-  size_t                 updates_qty, update_dur_ms, label_width, value_width;
-  struct StringFNStrings config_lines;
-  SDL_mutex              *mutex;
+  size_t                    rectangle_info_update_interval_ms;
+  int                       display_width, todo_width, rectangle_pid;
+  bool                      todo_enabled, poller_active;
+  char                      *todo_app, *config, *buf, *title;
+  unsigned long             last_update_ts;
+  size_t                    updates_qty, update_dur_ms, label_width, value_width;
+  struct StringFNStrings    config_lines;
+  SDL_mutex                 *mutex;
+  struct keycode_modifier_t *kcm;
 };
 static struct rectangle_info_t *rec = &(struct rectangle_info_t){
   .title                             = "Execution Info",
+  .rectangle_info_update_interval_ms = 10000,
+  .label_width                       = 90,
+  .value_width                       = 55,
   .last_update_ts                    = 0,
   .updates_qty                       = 0,
   .update_dur_ms                     = 0,
-  .label_width                       = 100, .value_width = 45,
-  .rectangle_info_update_interval_ms = 3000,
   .poller_active                     = true,
   .mutex                             = NULL,
 };
@@ -133,12 +139,13 @@ void update_rectangle_info(bool FORCE_UPDATE){
     rec->rectangle_pid = rectangle_get_pid();
     rec->todo_app      = rectangle_get_todo_app();
     rec->todo_enabled  = rectangle_get_todo_mode_enabled();
-    if ((FORCE_UPDATE) || rec->last_update_ts == 0 || ((timestamp() - rec->last_update_ts) > rec->rectangle_info_update_interval_ms * 5)) {
+    if ((FORCE_UPDATE) || rec->last_update_ts == 0 || ((timestamp() - rec->last_update_ts) > rec->rectangle_info_update_interval_ms * 3)) {
+      rec->kcm          = rectangle_get_todo_keys();
       rec->config       = rectangle_get_config();
       rec->config_lines = stringfn_split_lines_and_trim(rec->config);
     }
-    rec->update_dur_ms  = (size_t)(timestamp() - started);
     rec->last_update_ts = timestamp();
+    rec->update_dur_ms  = (size_t)(rec->last_update_ts - started);
   }
 }
 
@@ -149,7 +156,7 @@ int update_rectangle_info_thread(void *PARAM){
   while (active == true) {
     SDL_LockMutex(rec->mutex);
     update_rectangle_info(false);
-    size_t dur = rec->rectangle_info_update_interval_ms;
+    size_t dur = rec->rectangle_info_update_interval_ms - rec->update_dur_ms;
     SDL_UnlockMutex(rec->mutex);
     usleep(1000 * dur);
     SDL_LockMutex(rec->mutex);
@@ -176,35 +183,34 @@ static void rectangle_state_window(mu_Context *ctx) {
                       0);
 
         mu_label(ctx, "PID:");
-        asprintf(&rec->buf, "%d", rec->rectangle_pid); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%d", rec->rectangle_pid); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Todo Enabled:");
-        asprintf(&rec->buf, "%s", (rec->todo_enabled == true) ? "Yes" : "No"); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%s", (rec->todo_enabled == true) ? "Yes" : "No"); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Todo App:");
-        asprintf(&rec->buf, "%s", rec->todo_app); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%s", rec->todo_app); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Todo Width:");
-        asprintf(&rec->buf, "%dpx", rec->todo_width); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%dpx", rec->todo_width); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Update Duration:");
-        asprintf(&rec->buf, "%s", milliseconds_to_string(rec->update_dur_ms)); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%s", milliseconds_to_string(rec->update_dur_ms)); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Display Width:");
-        asprintf(&rec->buf, "%dpx", rec->display_width); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%dpx", rec->display_width); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Config Size:");
-        asprintf(&rec->buf, "%s", bytes_to_string(strlen(rec->config))); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%s", bytes_to_string(strlen(rec->config))); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Config Lines:");
-        asprintf(&rec->buf, "%d", rec->config_lines.count); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%d", rec->config_lines.count); mu_label(ctx, rec->buf); free(rec->buf);
 
         mu_label(ctx, "Update Interval:");
-        asprintf(&rec->buf, "%s", milliseconds_to_string(rec->rectangle_info_update_interval_ms)); mu_label(ctx, rec->buf);
+        asprintf(&rec->buf, "%s", milliseconds_to_string(rec->rectangle_info_update_interval_ms)); mu_label(ctx, rec->buf); free(rec->buf);
 
-        if (rec->buf) {
-          free(rec->buf);
-        }
+        mu_label(ctx, "Todo Keys:");
+        asprintf(&rec->buf, "%s", rec->kcm->keys); mu_label(ctx, rec->buf); free(rec->buf);
       }
     }
     SDL_UnlockMutex(rec->mutex);

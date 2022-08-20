@@ -22,6 +22,7 @@
 #include "c_deps/submodules/c_string_buffer/include/stringbuffer.h"
 #include "c_deps/submodules/c_stringfn/include/stringfn.h"
 #include "c_deps/submodules/parson/parson.h"
+#include "osx-keys/osx-keys.h"
 #include "SDL2/SDL_image.h"
 #include "timestamp/timestamp.h"
 #include "window-utils/window-utils.h"

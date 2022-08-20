@@ -29,6 +29,7 @@ inc = [
 subdir('c_deps/meson')
 subdir('c_deps/meson/deps/iconv')
 subdir('c_deps/submodules/c_darwin/process')
+subdir('c_deps/submodules/c_darwin/osx-keys')
 subdir('c_deps/submodules/c_ansi/ansi-codes')
 subdir('c_deps/submodules/c_ansi/ansi-utils')
 subdir('c_deps/submodules/c_darwin/core-utils')

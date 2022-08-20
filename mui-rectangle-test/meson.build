@@ -7,6 +7,8 @@ mui_rectangle_test_inc = [
 ]
 mui_rectangle_test_deps = [
  mui_rectangle_dep,
+ sdl2_ttf_dep,
+ sdl2_dep,
 ]
 
 if get_option('enable-binaries')
