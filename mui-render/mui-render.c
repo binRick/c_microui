@@ -12,8 +12,7 @@ static GLfloat      vert_buf[BUFFER_SIZE * 8];
 static GLubyte      color_buf[BUFFER_SIZE * 16];
 static GLuint       index_buf[BUFFER_SIZE * 6];
 static int          buf_idx;
-static SDL_Window   *window    = NULL;
-SDL_Window          *window2   = NULL;
+static SDL_Window   *window = NULL, *window2 = NULL, *window_wrapper = NULL;
 static SDL_Renderer *renderer  = NULL;
 SDL_Renderer        *renderer2 = NULL;
 static SDL_Texture  *texture   = NULL;
@@ -114,7 +113,6 @@ void render_terminal(struct mui_init_cfg_t CFG){
 } /* render_terminal */
 
 void r_init(struct mui_init_cfg_t CFG){
-  SDL_Log("SDL_WINDOW_OPTIONS:%d\n", SDL_WINDOW_OPTIONS);
   SDL_Log("OPTIONS:%d\n", CFG.options);
   SDL_Log("Offset:%dx%d\n", CFG.x_offset, CFG.y_offset);
   SDL_Log("size:%dx%d\n", CFG.width, CFG.height);
@@ -123,6 +121,11 @@ void r_init(struct mui_init_cfg_t CFG){
     SDL_Quit();
     return(2);
   }
+  int flags = 0;
+  flags |= SDL_RENDERER_ACCELERATED;
+  flags |= SDL_RENDERER_PRESENTVSYNC;
+  SDL_Log("Creating Windows");
+  //CFG.options = SDL_WINDOW_OPENGL;
   window = SDL_CreateWindow(
     CFG.title,
     CFG.x_offset, CFG.y_offset,
@@ -135,25 +138,28 @@ void r_init(struct mui_init_cfg_t CFG){
     CFG.width, CFG.height,
     CFG.options
     );
+  SDL_Log("Created Windows");
   int  window_id      = SDL_GetWindowID(window);
   int  window_id2     = SDL_GetWindowID(window2);
   char *window_title  = SDL_GetWindowTitle(window);
   char *window_title2 = SDL_GetWindowTitle(window2);
-  SDL_SetWindowGrab(window, SDL_FALSE);
-  SDL_SetWindowGrab(window2, SDL_FALSE);
   SDL_Log("Created Window ID #%d with title '%s'", window_id, window_title);
   SDL_Log("Created Window2 ID #%d with title '%s'", window_id2, window_title2);
 
+  SDL_SetWindowGrab(window, SDL_FALSE);
+  SDL_SetWindowGrab(window2, SDL_FALSE);
+
   LOAD_SURFACE_ICON(window, Terminal);
 
-  int flags2 = SDL_RENDERER_ACCELERATED;
-  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
+  int flags2 = 0;
+//  flags   |= SDL_RENDERER_ACCELERATED;
+  //flags   |= SDL_RENDERER_PRESENTVSYNC;
+  //SDL_RENDERER_ACCELERATED;
+//  SDL_SetHint(SDL_HINT_RENDER_BATCHING, "1");
   if (GL_RENDERER == true) {
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
   }
 
-  int flags = 0;
-  flags   |= SDL_RENDERER_ACCELERATED;
   renderer = SDL_CreateRenderer(window, -1, flags);
   if (renderer == NULL) {
     SDL_Log("Error creating SDL renderer: %s", SDL_GetError());
@@ -163,7 +169,7 @@ void r_init(struct mui_init_cfg_t CFG){
     SDL_GetRendererInfo(renderer, &info);
     SDL_Log("Current SDL Renderer: %s", info.name);
   }
-  renderer2 = SDL_CreateRenderer(window2, -1, flags2);
+  renderer2 = SDL_CreateRenderer(window2, -1, flags);
   if (renderer2 == NULL) {
     SDL_Log("Error creating SDL renderer2: %s", SDL_GetError());
     return;
@@ -172,7 +178,7 @@ void r_init(struct mui_init_cfg_t CFG){
     SDL_GetRendererInfo(renderer2, &info);
     SDL_Log("Current SDL Renderer2: %s", info.name);
   }
-  render_terminal(CFG);
+  SDL_Log("Created renderers");
 
   texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STATIC, ATLAS_WIDTH, ATLAS_HEIGHT);
   if (texture == NULL) {
@@ -192,6 +198,7 @@ void r_init(struct mui_init_cfg_t CFG){
     SDL_free(ptr);
   }
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  render_terminal(CFG);
 } /* r_init */
 
 static void flush(void) {

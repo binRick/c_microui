@@ -10,7 +10,6 @@ mui_test_inc = [
  '../',
 ]
 mui_test_deps = [
- sdl2_dep,
  mui_dep,
  mui_render_dep,
 ]

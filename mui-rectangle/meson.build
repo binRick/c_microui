@@ -56,9 +56,6 @@ mui_rectangle_deps = [
    ansi_utils_deps, 
 ]
 mui_rectangle_c_args = [
-  '-lSDL2_ttf',
-  '-I/usr/local/include/SDL2',
-  '-L/usr/local/lib','-lSDL2',
 ]
 
 mui_rectangle_lib = static_library('mui-rectangle',

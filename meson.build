@@ -1,24 +1,12 @@
-project('c_mui',['c'],default_options:['warning_level=0','c_std=gnu99','default_library=static'], version : '0.0.1',subproject_dir: 'submodules/c_deps/subprojects')
+project('c_mui',['c'],default_options:['warning_level=0','c_std=gnu99','default_library=static'], version : '0.0.1',subproject_dir: 'subprojects')
 cc = meson.get_compiler('c')
 pwd = meson.current_source_dir()
-sdl2_config_bin = find_program('sdl2-config',required:true)
+#sdl2_config_bin = find_program('sdl2-config',required:true)
 
-sdl2_libs_args = run_command(sdl2_config_bin, '--libs', check: true).stdout().strip()
-sdl2_cflags_args = run_command(sdl2_config_bin, '--cflags', check: true).stdout().strip()
 c_deps_dir = join_paths(meson.current_source_dir(),'submodules/c_deps')
 add_global_arguments(
-  '-I/usr/local/Cellar/sdl2_image/2.6.1/include',
-  '-I/usr/local/Cellar/sdl2_image/2.6.1/include/SDL2',
-  '-I/usr/local/Cellar/sdl2_ttf/2.20.0/include',
-  '-I/usr/local/Cellar/sdl2_ttf/2.20.0/include/SDL2',
-  '-I/usr/local/Cellar/sdl2/2.0.22/include',
-  '-I/usr/local/Cellar/sdl2/2.0.22/include/SDL2',
   '-Wno-unused-command-line-argument',
-  '-D_THREAD_SAFE',
-  '-L/usr/local/lib',
   '-lSDL2','-lSDL2_ttf','-lSDL2_image',
-  sdl2_cflags_args,
-  sdl2_libs_args,
   language : 'c',
 )
 #############################################################
@@ -26,10 +14,6 @@ inc = [
   include_directories('./'),
   './',
   include_directories('./mui-windows'),
-  include_directories('/usr/local/include'),
-  include_directories('/usr/local/Cellar/sdl2/2.0.22/include'),
-  '/usr/local/Cellar/sdl2/2.0.22/include',
-  '/usr/local/Cellar/sdl2_ttf/2.20.0/include','/usr/local/Cellar/sdl2_image/2.6.1/include',
   include_directories('./submodules/c_deps/submodules/c_ansi'),
   include_directories('./submodules/c_deps/submodules/c_ansi/ansi-codes'),
   include_directories('./submodules/c_deps/submodules'),
@@ -52,6 +36,22 @@ inc = [
   './mui',
   './',
   './submodules',
+  'submodules/iowow/src',
+  'submodules/iowow/src/kv',
+  'submodules/iowow/src/fs',
+  'submodules/iowow/src/log',
+  'submodules/iowow/src/json',
+  'submodules/iowow/src/platform',
+  'submodules/iowow',
+  include_directories(
+  'submodules/c_deps/submodules/iowow/src',
+  'submodules/c_deps/submodules/iowow/src/kv',
+  'submodules/c_deps/submodules/iowow/src/fs',
+  'submodules/c_deps/submodules/iowow/src/log',
+  'submodules/c_deps/submodules/iowow/src/json',
+  'submodules/c_deps/submodules/iowow/src/platform',
+  'submodules/c_deps/submodules/iowow',
+  ),
   './submodules/c_deps/submodules/c_ansi',
   './submodules/c_deps/submodules/c_ansi/ansi-codes',
   './submodules/c_deps/submodules/c_darwin',
@@ -103,8 +103,6 @@ configure_file(
 )
 #//////////////////
 subdir('submodules')
-#//////////////////
-#//////////////////
 #//////////////////
 #subdir('mui-meson-repos')
 #//////////////////

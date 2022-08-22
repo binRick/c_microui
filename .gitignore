@@ -25,3 +25,4 @@ subprojects/libspng
 loc.sh
 o
 submodules/c_deps
+subprojects

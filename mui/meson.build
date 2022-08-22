@@ -3,6 +3,8 @@ mui_srcs = [
 ]
 mui_inc = [
  inc,
+ './',
+ '../',
 ]
 mui_deps = [
   sdl2_image_dep,
@@ -20,9 +22,7 @@ mui_lib = static_library('mui',
   mui_srcs,
   install: false,
   dependencies: mui_deps,
-  include_directories: [
-    mui_inc,
-  ],
+  include_directories: mui_inc,
 )
 
 mui_dep = declare_dependency(

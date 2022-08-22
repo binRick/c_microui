@@ -295,8 +295,7 @@ int update_rectangle_info_thread(void *PARAM){
 }
 
 static void rectangle_state_window(mu_Context *ctx) {
-if (mu_begin_window_ex(ctx, "Rectangle State", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
-
+  if (mu_begin_window_ex(ctx, "Rectangle State", mu_rect(0, 0, CFG.width, BASIC_WINDOW_HEIGHT), BASIC_WINDOW_OPTIONS)) {
     SDL_LockMutex(rec->mutex);
     {
       asprintf(&rec->buf, "%s", rec->title);
@@ -345,14 +344,14 @@ if (mu_begin_window_ex(ctx, "Rectangle State", mu_rect(0, 0, CFG.width, BASIC_WI
     SDL_UnlockMutex(rec->mutex);
 
     if (mu_header_ex(ctx, "Controller", MU_OPT_NODRAG | MU_OPT_EXPANDED)) {
-
       static int checked = 1;
-      static int bgs = 100;
-      if(bgs == 100 && rec->rectangle_info_update_interval_ms > 100)
+      static int bgs     = 100;
+      if (bgs == 100 && rec->rectangle_info_update_interval_ms > 100) {
         bgs = rec->rectangle_info_update_interval_ms;
+      }
       mu_layout_row(ctx, 2, (int[]) { 200, -1 }, 0);
       mu_checkbox(ctx, "Interval", &checked);
-      mu_slider_ex(ctx, &bgs, 500, 10000,100,"%.0f",MU_OPT_ALIGNCENTER);
+      mu_slider_ex(ctx, &bgs, 500, 10000, 100, "%.0f", MU_OPT_ALIGNCENTER);
 
       mu_layout_row(ctx, 3, (int[]) { 200, 100, 100 }, 0);
       mu_label(ctx, "Test buttons 1:");
