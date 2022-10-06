@@ -1,10 +1,12 @@
 #pragma once
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+#include "stb/stb_image_write.h"
 #ifndef MUIRENDERC
 #define MUIRENDERC
 #define TERMINAL_FONT_SIZE    30
 #include "../mui-rectangle/mui-rectangle.h"
 #include "../mui/mui.h"
-#include "stb/stb_image.h"
 TTF_Font            *font;
 SDL_Surface         *text = NULL;
 static GLfloat      tex_buf[BUFFER_SIZE * 8];
@@ -75,16 +77,17 @@ void render_terminal(struct mui_init_cfg_t CFG){
           );
   _Scene scene;
 
-  text                = TTF_RenderText_Shaded_Wrapped(font, string, *forecol, *backcol, 0);
-  scene.captionRect.x = 4;
-  scene.captionRect.y = 4;
-  scene.captionRect.w = text->w;
-  scene.captionRect.h = text->h;
-  scene.caption       = SDL_CreateTextureFromSurface(renderer2, text);
-  _Scene *s = &scene;
-
-  SDL_FreeSurface(text);
-  text = TTF_RenderText_Shaded_Wrapped(font, CFG.terminal_content, *forecol, *backcol, 0);
+/*
+ * text                = TTF_RenderText_Shaded_Wrapped(font, string, *forecol, *backcol, 0);
+ * scene.captionRect.x = 4;
+ * scene.captionRect.y = 4;
+ * scene.captionRect.w = text->w;
+ * scene.captionRect.h = text->h;
+ * scene.caption       = SDL_CreateTextureFromSurface(renderer2, text);
+ * _Scene *s = &scene;
+ * SDL_FreeSurface(text);
+ * text = TTF_RenderText_Shaded_Wrapped(font, CFG.terminal_content, *forecol, *backcol, 0);
+ */
 
   if (text == NULL) {
     SDL_Log("Couldn't render text: %s\n", SDL_GetError());
@@ -92,8 +95,8 @@ void render_terminal(struct mui_init_cfg_t CFG){
     exit(2);
   }
 
-  SDL_Texture *Loading_Surf  = SDL_LoadBMP("/tmp/hello.bmp");
-  SDL_Texture *Background_Tx = SDL_CreateTextureFromSurface(renderer2, Loading_Surf);
+  SDL_Texture *Loading_Surf = SDL_LoadBMP("/tmp/hello.bmp");
+//  SDL_Texture *Background_Tx = SDL_CreateTextureFromSurface(renderer2, Loading_Surf);
 
   SDL_FreeSurface(Loading_Surf);
 
@@ -108,8 +111,8 @@ void render_terminal(struct mui_init_cfg_t CFG){
   SDL_RenderClear(renderer2);
   //    SDL_RenderCopy(renderer2, Background_Tx, NULL, NULL);
 //  SDL_RenderCopy(renderer2, s->caption, NULL, &(s->captionRect));
-  SDL_RenderCopy(renderer2, s->message, NULL, &(s->messageRect));
-  SDL_RenderPresent(renderer2);
+// SDL_RenderCopy(renderer2, s->message, NULL, &(s->messageRect));
+//  SDL_RenderPresent(renderer2);
 } /* render_terminal */
 
 void r_init(struct mui_init_cfg_t CFG){
@@ -119,7 +122,7 @@ void r_init(struct mui_init_cfg_t CFG){
   if (TTF_Init() < 0) {
     SDL_Log("Couldn't initialize TTF: %s\n", SDL_GetError());
     SDL_Quit();
-    return(2);
+    return;
   }
   int flags = 0;
   flags |= SDL_RENDERER_ACCELERATED;
@@ -198,7 +201,7 @@ void r_init(struct mui_init_cfg_t CFG){
     SDL_free(ptr);
   }
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-  render_terminal(CFG);
+//  render_terminal(CFG);
 } /* r_init */
 
 static void flush(void) {

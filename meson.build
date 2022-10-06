@@ -21,13 +21,6 @@ inc = [
     './submodules/c_deps/submodules/c_ansi/ansi-codes',
     './submodules/c_deps/submodules/c_ansi',
   ),
-  include_directories(
-    './submodules/c_deps/submodules/c_darwin',
-    './submodules/c_deps/submodules/c_darwin/active-app',
-    './submodules/c_deps/submodules/c_darwin/window-utils',
-    './submodules/c_deps/submodules/c_darwin/app-utils',
-    './submodules/c_deps/submodules/c_darwin/process',
-  ),
   './submodules/c_deps/submodules/djbhash',
   './submodules/c_deps/submodules/djbhash/src',
   include_directories('./mui','./mui-render'),
@@ -54,8 +47,6 @@ inc = [
   ),
   './submodules/c_deps/submodules/c_ansi',
   './submodules/c_deps/submodules/c_ansi/ansi-codes',
-  './submodules/c_deps/submodules/c_darwin',
-  './submodules/c_deps/submodules/c_darwin/active-app',
   './submodules/c_deps',
   './submodules/c_deps/meson',
   include_directories(
@@ -111,12 +102,12 @@ subdir('submodules')
 subdir('mui')
 subdir('mui-atlas')
 subdir('mui-render')
-subdir('mui-rectangle')
+#subdir('mui-rectangle')
 subdir('mui-basic')
-subdir('mui-windows')
+#subdir('mui-windows')
 #//////////////////
 subdir('mui-test')
 subdir('mui-basic-test')
-subdir('mui-windows-test')
-subdir('mui-rectangle-test')
+#subdir('mui-windows-test')
+#subdir('mui-rectangle-test')
 #//////////////////

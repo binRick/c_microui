@@ -2,8 +2,6 @@
 #ifndef MUIICONSH
 #define MUIICONSH
 /////////////////////////////////////////////////////////////////////////////
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
 #define INCBIN_SILENCE_BITCODE_WARNING
 #define INCBIN_STYLE     INCBIN_STYLE_SNAKE
 #define INCBIN_PREFIX    icon_

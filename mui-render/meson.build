@@ -38,5 +38,5 @@ mui_render_lib = static_library('mui-render',
 mui_render_dep = declare_dependency(
   include_directories: mui_render_inc,
   link_with: mui_render_lib,
-  link_args: window_utils_link_flags,
+  link_args: [],
 )

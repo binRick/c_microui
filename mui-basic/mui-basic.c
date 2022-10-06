@@ -3,6 +3,7 @@
 #define MUIBASICC
 #include "../mui-basic/mui-basic.h"
 #include "../mui/mui.h"
+#include "c_vector/vector/vector.h"
 #define          BUTTONS_PER_ROW    5
 #define          BUTTON_PADDING     5
 #define          BUTTON_SIZE        125
@@ -54,7 +55,6 @@ size_t        last_windows_list_reloaded_ts   = 0;
 SDL_mutex     *windows_mutex;
 SDL_Thread    *poll_windows_thread;
 bool          poll_windows_thread_active = false;
-window_t      *cur_selected_window       = NULL;
 SDL_Texture   *texture;
 
 static void write_log(const char *text) {
@@ -71,7 +71,6 @@ static int poll_windows_thread_function(void *ARGS){
   SDL_UnlockMutex(windows_mutex);
   while (active) {
     size_t        qty = 0;
-    window_t      *w;
     unsigned long dur = 0;
     SDL_LockMutex(windows_mutex);
     {
@@ -80,7 +79,6 @@ static int poll_windows_thread_function(void *ARGS){
       if (active == false) {
         break;
       }
-      windows                       = get_windows();
       last_windows_list_reloaded_ts = timestamp();
       qty                           = vector_size(windows);
       unsigned long dur = timestamp() - ts;
@@ -88,7 +86,6 @@ static int poll_windows_thread_function(void *ARGS){
     SDL_UnlockMutex(windows_mutex);
     for (size_t i = 0; i < qty; i++) {
       SDL_LockMutex(windows_mutex);
-      w = (window_t *)vector_get(windows, i);
       SDL_UnlockMutex(windows_mutex);
     }
     SDL_Delay(RELOAD_WINDOWS_LIST_INTERVAL_MS);
@@ -102,15 +99,13 @@ static void basic_window(mu_Context *ctx) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, CFG.width);
     win->rect.h = mu_max(win->rect.h, CFG.height);
-    window_t *w;
-    size_t   qty = 0;
+    size_t qty = 0;
     SDL_LockMutex(windows_mutex);
     qty = vector_size(windows);
     SDL_UnlockMutex(windows_mutex);
     if (mu_header_ex(ctx, BASIC_WINDOW_TITLE, BASIC_WINDOW_OPTIONS | MU_OPT_EXPANDED | MU_OPT_AUTOSIZE)) {
       for (size_t i = 0; i < qty; i++) {
         SDL_LockMutex(windows_mutex);
-        w = (window_t *)vector_get(windows, i);
         SDL_UnlockMutex(windows_mutex);
         if ((i % BUTTONS_PER_ROW) == 0) {
           mu_layout_row(ctx, BUTTONS_PER_ROW, (int[]) {
@@ -121,16 +116,6 @@ static void basic_window(mu_Context *ctx) {
             CFG.width / BUTTONS_PER_ROW - BUTTON_PADDING,
           }, BUTTON_HEIGHT);
         }
-        char *button_name;
-        asprintf(&button_name, "%s-%d", w->app_name, w->window_id);
-        if (mu_button_ex(ctx, button_name, BUTTON_ICON, MU_OPT_ALIGNCENTER)) {
-          SDL_Log("clicked app name: %s | window id: %d", w->app_name, w->window_id);
-          SDL_LockMutex(windows_mutex);
-          cur_selected_window = w;
-          SDL_UnlockMutex(windows_mutex);
-          SDL_Log("cur window id: %d", cur_selected_window->window_id);
-        }
-        free(button_name);
       }
     }
     mu_end_window(ctx);
@@ -206,7 +191,7 @@ int text_height(mu_Font font) {
 int pid_post(int pid){
   if (RETAIN_INITIAL_FOCUS) {
     SDL_Log("setting focused process to pid %d", pid);
-    bool ok = set_focused_pid(pid);
+//    bool ok = set_focused_pid(pid);
     printf("set ok:%d\n", ok);
     return(ok);
   }
@@ -227,7 +212,6 @@ int mui_basic(){
   ctx->text_height = text_height;
 
   SDL_LockMutex(windows_mutex);
-  windows                    = get_windows();
   poll_windows_thread_active = true;
   SDL_UnlockMutex(windows_mutex);
   poll_windows_thread = SDL_CreateThread(poll_windows_thread_function, "PollWindows", (void *)NULL);
@@ -320,12 +304,13 @@ int mui_basic(){
   SDL_DestroyMutex(windows_mutex);
   return(0);
 } /* main */
-
-int pid_pre(){
-  int focused_pid = get_focused_pid();
-
-  SDL_Log("found focused pid to be %d", focused_pid);
-  return(focused_pid);
-}
+/*
+ * int pid_pre(){
+ * int focused_pid = get_focused_pid();
+ *
+ * SDL_Log("found focused pid to be %d", focused_pid);
+ * return(focused_pid);
+ * }
+ */
 
 #endif

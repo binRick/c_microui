@@ -26,7 +26,7 @@ static float bg[3]          = { WINDOW_BACKGROUND_RED, WINDOW_BACKGROUND_GREEN, 
 #define CURRENT_STATE_OPTIONS    MU_OPT_NODRAG | MU_OPT_NOCLOSE
 #define LOG_OPTIONS              MU_OPT_NODRAG | MU_OPT_NOCLOSE
 #include "mui-render/mui-render.h"
-#include "window-utils/window-utils.h"
+
 static struct mui_init_cfg_t CFG = {
   .title    = CFG_TITLE,
   .options  = CFG_OPTIONS,

@@ -64,15 +64,15 @@ volatile int       set_focus_qty   = 0;
 static size_t      windows_per_row = 3;
 //////////////////////////////////////////////////////////////////////////
 
-char          windows_qty_title[32];
-struct Vector *windows;
-const size_t  RELOAD_WINDOWS_LIST_INTERVAL_MS = 2000;
-size_t        last_windows_list_reloaded_ts   = 0;
-SDL_mutex     *windows_mutex;
-SDL_Thread    *poll_windows_thread;
-bool          poll_windows_thread_active = false;
-window_t      *cur_selected_window       = NULL;
-SDL_Texture   *texture;
+char                 windows_qty_title[32];
+struct Vector        *windows;
+const size_t         RELOAD_WINDOWS_LIST_INTERVAL_MS = 2000;
+size_t               last_windows_list_reloaded_ts   = 0;
+SDL_mutex            *windows_mutex;
+SDL_Thread           *poll_windows_thread;
+bool                 poll_windows_thread_active = false;
+struct window_info_t *cur_selected_window       = NULL;
+SDL_Texture          *texture;
 
 static void write_log(const char *text) {
   if (logbuf[0]) {
@@ -96,9 +96,9 @@ static void test_window(mu_Context *ctx) {
 
       if (cur_selected_window != NULL) {
         mu_label(ctx, "App Name:");
-        sprintf(buf, "%s", cur_selected_window->app_name); mu_label(ctx, buf);
+        sprintf(buf, "%s", cur_selected_window->name); mu_label(ctx, buf);
         mu_label(ctx, "Window ID:"); sprintf(buf, "%d", cur_selected_window->window_id); mu_label(ctx, buf);
-        mu_label(ctx, "Position:"); sprintf(buf, "%dx%d", (int)cur_selected_window->position.x, (int)cur_selected_window->position.y); mu_label(ctx, buf);
+        mu_label(ctx, "Position:"); sprintf(buf, "%dx%d", (int)cur_selected_window->rect.origin.x, (int)cur_selected_window->rect.origin.y); mu_label(ctx, buf);
         mu_label(ctx, "PID:"); sprintf(buf, "%d", cur_selected_window->pid); mu_label(ctx, buf);
       }
       SDL_UnlockMutex(windows_mutex);
@@ -115,9 +115,9 @@ static int poll_windows_thread_function(void *ARGS){
   bool active = poll_windows_thread_active;
   SDL_UnlockMutex(windows_mutex);
   while (active) {
-    size_t        qty = 0;
-    window_t      *w;
-    unsigned long dur = 0;
+    size_t               qty = 0;
+    struct window_info_t *w;
+    unsigned long        dur = 0;
     SDL_LockMutex(windows_mutex);
     {
       unsigned long ts = timestamp();
@@ -125,7 +125,7 @@ static int poll_windows_thread_function(void *ARGS){
       if (active == false) {
         break;
       }
-      windows                       = get_windows();
+      windows                       = get_window_infos_v();
       last_windows_list_reloaded_ts = timestamp();
       qty                           = vector_size(windows);
       unsigned long dur = timestamp() - ts;
@@ -133,7 +133,7 @@ static int poll_windows_thread_function(void *ARGS){
     SDL_UnlockMutex(windows_mutex);
     for (size_t i = 0; i < qty; i++) {
       SDL_LockMutex(windows_mutex);
-      w = (window_t *)vector_get(windows, i);
+      w = (struct window_info_t *)vector_get(windows, i);
       SDL_UnlockMutex(windows_mutex);
     }
     SDL_Delay(RELOAD_WINDOWS_LIST_INTERVAL_MS);
@@ -148,11 +148,11 @@ static void windows_window(mu_Context *ctx) {
  * size_t last_windows_list_reloaded_age = timestamp() - last_windows_list_reloaded_ts;
  *
  * if (last_windows_list_reloaded_ts == 0 || (last_windows_list_reloaded_age) > RELOAD_WINDOWS_LIST_INTERVAL_MS) {
- * //  windows                       = get_windows();
+ * //  windows                       = get_window_infos_v();
  * sprintf(windows_qty_title, "%lu Windows", vector_size(windows));
  * for (size_t i = 0; i < vector_size(windows); i++) {
  * SDL_LockMutex(windows_mutex);
- * window_t *w = (window_t *)vector_get(windows, i);
+ * window_info_t *w = (window_info_t *)vector_get(windows, i);
  * SDL_UnlockMutex(windows_mutex);
  * fprintf(stdout, "======================================\n");
  * }
@@ -164,9 +164,9 @@ static void windows_window(mu_Context *ctx) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, WINDOW_WIDTH);
     win->rect.h = mu_max(win->rect.h, CURRENT_STATE_HEIGHT);
-    size_t   best_qty = 3000, recent_qty = 25, all_qty = 10000;
-    window_t *w;
-    size_t   qty = 0;
+    size_t               best_qty = 3000, recent_qty = 25, all_qty = 10000;
+    struct window_info_t *w;
+    size_t               qty = 0;
     SDL_LockMutex(windows_mutex);
     {
       qty = vector_size(windows);
@@ -177,7 +177,7 @@ static void windows_window(mu_Context *ctx) {
       for (size_t i = 0; i < qty; i++) {
         SDL_LockMutex(windows_mutex);
         {
-          w = (window_t *)vector_get(windows, i);
+          w = (struct window_info_t *)vector_get(windows, i);
         }
         SDL_UnlockMutex(windows_mutex);
         if ((i % windows_per_row) == 0) {
@@ -188,9 +188,9 @@ static void windows_window(mu_Context *ctx) {
           }, 0);
         }
         char *button_name;
-        asprintf(&button_name, "%s-%d", w->app_name, w->window_id);
+        asprintf(&button_name, "%s-%d", w->name, w->window_id);
         if (mu_button(ctx, button_name)) {
-          SDL_Log("clicked app name: %s", w->app_name);
+          SDL_Log("clicked app name: %s", w->name);
           SDL_LockMutex(windows_mutex);
           {
             cur_selected_window = w;
@@ -369,7 +369,7 @@ int mui_windows(){
 
   SDL_LockMutex(windows_mutex);
   {
-    windows                    = get_windows();
+    windows                    = get_window_infos_v();
     poll_windows_thread_active = true;
   }
   SDL_UnlockMutex(windows_mutex);

@@ -1,14 +1,8 @@
 #pragma once
 #ifndef MUIH
 #define MUIH
-#include "active-app/active-app.h"
-#include "app-utils/app-utils.h"
-#include "core-utils/core-utils.h"
-#include "process/process.h"
-#include "stb/stb_image.h"
 #include "SDL2/SDL_image.h"
 #include "timestamp/timestamp.h"
-#include "window-utils/window-utils.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdbool.h>
@@ -226,7 +220,6 @@ struct mu_Context {
 };
 #include "../mui-atlas/mui-atlas.h"
 #include "../mui-render/mui-render.h"
-#include "window-utils/window-utils.h"
 
 mu_Vec2 mu_vec2(int x, int y);
 mu_Rect mu_rect(int x, int y, int w, int h);

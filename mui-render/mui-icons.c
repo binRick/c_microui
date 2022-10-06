@@ -3,6 +3,7 @@
 #include "../mui/mui.h"
 /////////////////////////////////////////////////////////////////////////
 #include "../mui-render/mui-icons.h"
+#include "stb/stb_image.h"
 /////////////////////////////////////////////////////////////////////////
 INC_ICON(Terminal);
 /////////////////////////////////////////////////////////////////////////
@@ -14,24 +15,25 @@ struct surface_icon_t *get_surface_icon(char *ICON_NAME){
   i->icon_data  = icon_Terminal_data;
   i->icon_size  = icon_Terminal_size;
   i->req_format = STBI_rgb_alpha;
-  i->data       = stbi_load_from_memory(i->icon_data, i->icon_size, &i->width, &i->height, &i->orig_format, i->req_format);
-  if (i->data == NULL) {
-    fprintf(stderr, "Loading icon %s failed", i->icon_name);
-    exit(1);
-  }
-  if (i->req_format == STBI_rgb) {
-    i->depth        = 24;
-    i->pitch        = 3 * i->width; // 3 bytes per pixel * pixels per row
-    i->pixel_format = SDL_PIXELFORMAT_RGB24;
-  } else {                          // STBI_rgb_alpha (RGBA)
-    i->depth        = 32;
-    i->pitch        = 4 * i->width;
-    i->pixel_format = SDL_PIXELFORMAT_RGBA32;
-  }
-  SDL_Log("Loaded %db Icon %s> depth:%d,pitch:%d,pixel_format:%d",
-          i->icon_size, i->icon_name,
-          i->depth, i->pitch, i->pixel_format
-          );
+/*  i->data       = stbi_load_from_memory(i->icon_data, i->icon_size, &i->width, &i->height, &i->orig_format, i->req_format);
+ * if (i->data == NULL) {
+ *  fprintf(stderr, "Loading icon %s failed", i->icon_name);
+ *  exit(1);
+ * }
+ * if (i->req_format == STBI_rgb) {
+ *  i->depth        = 24;
+ *  i->pitch        = 3 * i->width; // 3 bytes per pixel * pixels per row
+ *  i->pixel_format = SDL_PIXELFORMAT_RGB24;
+ * } else {                          // STBI_rgb_alpha (RGBA)
+ *  i->depth        = 32;
+ *  i->pitch        = 4 * i->width;
+ *  i->pixel_format = SDL_PIXELFORMAT_RGBA32;
+ * }
+ * SDL_Log("Loaded %db Icon %s> depth:%d,pitch:%d,pixel_format:%d",
+ *        i->icon_size, i->icon_name,
+ *        i->depth, i->pitch, i->pixel_format
+ *        );
+ */
   i->icon_surface = SDL_CreateRGBSurfaceWithFormatFrom((void *)i->data, i->width, i->height, i->depth, i->pitch, i->pixel_format);
   return(i);
 }

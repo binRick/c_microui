@@ -26,3 +26,6 @@ loc.sh
 o
 submodules/c_deps
 subprojects
+.*.db
+.meson.build*.log
+.meson-build*.log

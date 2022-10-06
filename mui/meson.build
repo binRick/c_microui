@@ -9,13 +9,7 @@ mui_inc = [
 mui_deps = [
   sdl2_image_dep,
   sdl2_dep,
-  window_utils_dep,
-  stb_dep,
-  core_utils_dep,
-  window_utils_dep,
-  app_utils_dep,
-  active_app_dep,
-  process_dep,
+  
 ]
 
 mui_lib = static_library('mui',

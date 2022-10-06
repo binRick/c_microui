@@ -11,7 +11,7 @@ static struct mui_init_cfg_t CFG = {
   .terminal_content = "none",
 };
 //////////////////////////////////////////////////////////////////////////
-static int pid_pre();
+//static int pid_pre();
 static void callback(tmt_msg_t m, TMT *vt, void *EXEC, void *c);
 static void printTerminal(TMT *vt, struct tmt_exec_t *exec);
 //////////////////////////////////////////////////////////////////////////
@@ -192,16 +192,16 @@ static float       OUTER_BG[3]    = { 0, 0, 0 };
 volatile int       set_focus_qty  = 0;
 //////////////////////////////////////////////////////////////////////////
 
-char          windows_qty_title[32];
-struct Vector *windows;
-const size_t  RELOAD_WINDOWS_LIST_INTERVAL_MS = 2000;
-size_t        last_windows_list_reloaded_ts   = 0;
-SDL_mutex     *windows_mutex;
-SDL_Thread    *poll_windows_thread;
-SDL_Thread    *poll_rec_thread;
-bool          poll_windows_thread_active = false;
-window_t      *cur_selected_window       = NULL;
-SDL_Texture   *texture;
+char                 windows_qty_title[32];
+struct Vector        *windows;
+const size_t         RELOAD_WINDOWS_LIST_INTERVAL_MS = 2000;
+size_t               last_windows_list_reloaded_ts   = 0;
+SDL_mutex            *windows_mutex;
+SDL_Thread           *poll_windows_thread;
+SDL_Thread           *poll_rec_thread;
+bool                 poll_windows_thread_active = false;
+struct window_info_t *cur_selected_window       = NULL;
+SDL_Texture          *texture;
 
 static void write_log(const char *text) {
   if (logbuf[0]) {
@@ -216,9 +216,9 @@ static int poll_windows_thread_function(void *ARGS){
   bool active = poll_windows_thread_active;
   SDL_UnlockMutex(windows_mutex);
   while (active) {
-    size_t        qty = 0;
-    window_t      *w;
-    unsigned long dur = 0;
+    size_t               qty = 0;
+    struct window_info_t *w;
+    unsigned long        dur = 0;
     SDL_LockMutex(windows_mutex);
     {
       unsigned long ts = timestamp();
@@ -226,7 +226,7 @@ static int poll_windows_thread_function(void *ARGS){
       if (active == false) {
         break;
       }
-      windows                       = get_windows();
+      windows                       = get_window_infos_v();
       last_windows_list_reloaded_ts = timestamp();
       qty                           = vector_size(windows);
       unsigned long dur = timestamp() - ts;
@@ -234,7 +234,7 @@ static int poll_windows_thread_function(void *ARGS){
     SDL_UnlockMutex(windows_mutex);
     for (size_t i = 0; i < qty; i++) {
       SDL_LockMutex(windows_mutex);
-      w = (window_t *)vector_get(windows, i);
+      w = (struct window_info_t *)vector_get(windows, i);
       SDL_UnlockMutex(windows_mutex);
     }
     SDL_Delay(RELOAD_WINDOWS_LIST_INTERVAL_MS);
@@ -389,15 +389,15 @@ static void rectangle_windows_window(mu_Context *ctx) {
     mu_Container *win = mu_get_current_container(ctx);
     win->rect.w = mu_max(win->rect.w, CFG.width);
     win->rect.h = mu_max(win->rect.h, CFG.height);
-    window_t *w;
-    size_t   qty = 0;
+    struct window_info_t *w;
+    size_t               qty = 0;
     SDL_LockMutex(windows_mutex);
     qty = vector_size(windows);
     SDL_UnlockMutex(windows_mutex);
     if (mu_header_ex(ctx, BASIC_WINDOW_TITLE, BASIC_WINDOW_OPTIONS | MU_OPT_EXPANDED | MU_OPT_AUTOSIZE)) {
       for (size_t i = 0; i < qty; i++) {
         SDL_LockMutex(windows_mutex);
-        w = (window_t *)vector_get(windows, i);
+        w = (struct window_info_t *)vector_get(windows, i);
         SDL_UnlockMutex(windows_mutex);
         if ((i % BUTTONS_PER_ROW) == 0) {
           mu_layout_row(ctx, BUTTONS_PER_ROW, (int[]) {
@@ -409,9 +409,9 @@ static void rectangle_windows_window(mu_Context *ctx) {
           }, BUTTON_HEIGHT);
         }
         char *button_name;
-        asprintf(&button_name, "%s-%d", w->app_name, w->window_id);
+        asprintf(&button_name, "%s-%d", w->name, w->window_id);
         if (mu_button_ex(ctx, button_name, BUTTON_ICON, MU_OPT_ALIGNCENTER)) {
-          SDL_Log("clicked app name: %s | window id: %d", w->app_name, w->window_id);
+          SDL_Log("clicked app name: %s | window id: %d", w->name, w->window_id);
           SDL_LockMutex(windows_mutex);
           cur_selected_window = w;
           SDL_UnlockMutex(windows_mutex);
@@ -497,7 +497,7 @@ int mui_rectangle(){
   windows_mutex = SDL_CreateMutex();
   int threadReturnValue = -1;
   if (orig_focused_pid == -1) {
-    orig_focused_pid = pid_pre();
+//    orig_focused_pid = pid_pre();
   }
   SDL_Init(SDL_INIT_EVERYTHING);
   r_init(CFG);
@@ -509,7 +509,7 @@ int mui_rectangle(){
   ctx->text_height = text_height;
 
   SDL_LockMutex(windows_mutex);
-  windows                    = get_windows();
+  windows                    = get_window_infos_v();
   poll_windows_thread_active = true;
   SDL_UnlockMutex(windows_mutex);
 
@@ -583,10 +583,12 @@ int mui_rectangle(){
       }
       } /* switch */
     }
-    if (orig_focused_pid_set == false) {
-      orig_focused_pid_set = true;
-      set_focused_pid(orig_focused_pid);
-    }
+    /*
+     * if (orig_focused_pid_set == false) {
+     * orig_focused_pid_set = true;
+     * set_focused_pid(orig_focused_pid);
+     * }
+     */
     process_frame(ctx);
     r_clear(mu_color(OUTER_BG[0], OUTER_BG[1], OUTER_BG[2], 255));
     mu_Command *cmd = NULL;
@@ -617,10 +619,12 @@ int mui_rectangle(){
   SDL_DestroyMutex(windows_mutex);
   return(0);
 } /* main */
-
-int pid_pre(){
-  is_authorized_for_accessibility();
-  int focused_pid = get_focused_pid();
-  SDL_Log("found focused pid to be %d", focused_pid);
-  return(focused_pid);
-}
+/*
+ * int pid_pre(){
+ * is_authorized_for_accessibility();
+ * int focused_pid = get_focused_pid();
+ * SDL_Log("found focused pid to be %d", focused_pid);
+ * return(focused_pid);
+ *
+ * }
+ */

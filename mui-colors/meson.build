@@ -11,8 +11,6 @@ mui_colors_inc = [
  '../mui-render',
  '../submodules/c_deps',
  '../submodules/c_deps/submodules',
- '../submodules/c_deps/submodules/c_darwin/active-app',
- '../submodules/c_deps/submodules/c_darwin',
  '../submodules/c_deps/submodules/c_ansi',
  '../submodules/c_deps/submodules/c_ansi/ansi-utils',
  '../submodules/c_deps/submodules/djbhash',

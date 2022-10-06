@@ -24,7 +24,7 @@
 #include "c_deps/submodules/parson/parson.h"
 #include "SDL2/SDL_image.h"
 #include "timestamp/timestamp.h"
-#include "window-utils/window-utils.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>

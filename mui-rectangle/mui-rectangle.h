@@ -2,12 +2,12 @@
 #ifndef MUIRECTANGLEH
 #define MUIRECTANGLEH
 #include "../mui/mui.h"
-#include "active-app/active-app.h"
+
 #include "bytes/bytes.h"
 #include "c_stringfn/include/stringfn.h"
 #include "libtmt/tmt.h"
 #include "ms/ms.h"
-#include "rectangle/rectangle.h"
+
 #include <assert.h>
 #include <assert.h>
 #include <ApplicationServices/ApplicationServices.h>
@@ -35,10 +35,10 @@
 #include "c_deps/submodules/c_string_buffer/include/stringbuffer.h"
 #include "c_deps/submodules/c_stringfn/include/stringfn.h"
 #include "c_deps/submodules/parson/parson.h"
-#include "osx-keys/osx-keys.h"
+
 #include "SDL2/SDL_image.h"
 #include "timestamp/timestamp.h"
-#include "window-utils/window-utils.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>

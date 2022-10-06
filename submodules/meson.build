@@ -15,35 +15,61 @@ inc = [
   include_directories('c_deps/submodules/progressbar/lib'),
   include_directories('c_deps/submodules/list/src'),
   include_directories('c_deps/submodules/progress.c'),
-  include_directories('c_deps/submodules/c_darwin'),
   include_directories('c_deps/submodules/c_colors'),
   include_directories('c_deps/submodules/c_colors/parse-colors'),
   include_directories('c_deps/submodules/c_colors/submodules'),
+  include_directories('c_deps/submodules/iowow'),
+  include_directories('c_deps/submodules/iowow/src'),
+  include_directories('c_deps/submodules/iowow/src/log'),
+  include_directories('c_deps/submodules/iowow/src/platform'),
+  include_directories('c_deps/submodules/iowow/src/fs'),
   include_directories('c_deps/submodules'),
-  include_directories('c_deps/submodules/c_darwin'),
-  include_directories('c_deps/submodules/c_darwin/process'),
-  include_directories('c_deps/submodules/c_darwin/rectangle'),
   include_directories('.'),
 ]  
 
-subdir('c_deps/meson')
+subdir('c_deps/meson/osx')
 subdir('c_deps/meson/deps/iconv')
-subdir('c_deps/submodules/c_darwin/process')
-subdir('c_deps/submodules/c_darwin/osx-keys')
+subdir('c_deps/meson/sqlite3')
+subdir('c_deps/meson/deps/asprintf')
+subdir('c_deps/meson/deps/smaz')
+subdir('c_deps/meson/deps/tempdir')
+subdir('c_deps/meson/deps/progress')
+subdir('c_deps/meson/deps/sdl2')
+subdir('c_deps/meson/deps/stb')
+subdir('c_deps/meson/deps/uuid4')
+subdir('c_deps/meson/deps/ms')
+subdir('c_deps/meson/deps/timestamp')
+subdir('c_deps/meson/deps/incbin')
+subdir('c_deps/meson/deps/wildcardcmp')
+subdir('c_deps/meson/deps/c_dbg')
+subdir('c_deps/meson/deps/termpaint')
+subdir('c_deps/meson/deps/c_string_buffer')
+subdir('c_deps/meson/deps/c_fsio')
+subdir('c_deps/meson/deps/module')
+subdir('c_deps/meson/deps/c_timer')
+subdir('c_deps/meson/deps/c_vector')
+subdir('c_deps/meson/deps/c_stringfn')
+subdir('c_deps/meson/deps/b64')
+subdir('c_deps/meson/deps/hsluv-c')
+subdir('c_deps/meson/deps/rgba')
+subdir('c_deps/meson/deps/djbhash')
+subdir('c_deps/meson/deps/libyaml')
+subdir('c_deps/meson/deps/cargs')
+subdir('c_deps/meson/deps/parson')
+subdir('c_deps/meson/deps/fs')
+subdir('c_deps/meson/deps/log')
+subdir('c_deps/meson/deps/bytes')
 subdir('c_deps/submodules/c_ansi/ansi-codes')
 subdir('c_deps/submodules/c_ansi/ansi-utils')
-subdir('c_deps/submodules/c_darwin/core-utils')
-subdir('c_deps/submodules/c_darwin/kitty')
-subdir('c_deps/submodules/c_darwin/pbpaste')
-subdir('c_deps/submodules/c_darwin/pasteboard')
-subdir('c_deps/submodules/c_darwin/system-utils')
-subdir('c_deps/submodules/c_darwin/active-app')
-subdir('c_deps/submodules/c_darwin/window-utils')
-subdir('c_deps/submodules/c_darwin/app-utils')
 subdir('c_deps/submodules/c_ansi/ansi-rgb-utils')
+subdir('c_deps/lodepng')
+
+subdir('c_deps/submodules/c_ansi/string-utils')
+
+
+
 subdir('c_deps/submodules/c_colors/db')
 subdir('c_deps/submodules/c_colors/hex-png-pixel-utils')
 subdir('c_deps/submodules/c_colors/rgb-ansi-utils')
 subdir('c_deps/submodules/c_colors/colors-csv-parser')
 subdir('c_deps/submodules/c_colors/colors-json-parser')
-subdir('c_deps/submodules/c_darwin/rectangle')
